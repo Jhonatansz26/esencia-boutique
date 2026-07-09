@@ -5,7 +5,7 @@ interface ButtonProps {
   children: ReactNode;
   onClick?: () => void;
   href?: string;
-  variant?: "primary" | "outline";
+  variant?: "primary" | "outline" | "invert";
   className?: string;
   type?: "button" | "submit" | "reset";
 }
@@ -19,17 +19,20 @@ export default function Button({
   type = "button",
 }: ButtonProps) {
   const baseStyles =
-    "rounded-sm px-6 py-3 tracking-wide transition-all duration-300 hover:bg-opacity-90 font-medium";
+    "rounded-sm px-6 py-3 tracking-wide transition-all duration-300 font-medium";
 
-  const variantStyles =
-    variant === "primary"
-      ? "bg-[#1A1A1A] text-[#FDFBF7] hover:bg-opacity-90"
-      : "bg-transparent border border-[#1A1A1A] text-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-[#FDFBF7]";
+  const variantStyles = {
+    primary:
+      "bg-[#1A1A1A] text-[#FDFBF7] hover:bg-opacity-90",
+    outline:
+      "bg-transparent border border-[#1A1A1A] text-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-[#FDFBF7]",
+    invert:
+      "bg-[#FDFBF7] text-[#1A1A1A] hover:bg-[#D4AF37] hover:text-[#1A1A1A]",
+  }[variant];
 
   const combinedStyles = `${baseStyles} ${variantStyles} ${className}`.trim();
 
   if (href) {
-    // Si es una URL externa, usar <a> nativo con target="_blank"
     if (href.startsWith("http://") || href.startsWith("https://")) {
       return (
         <a
@@ -42,7 +45,6 @@ export default function Button({
         </a>
       );
     }
-    // Si es una ruta interna, usar <Link> de Next.js
     return (
       <Link href={href} className={combinedStyles}>
         {children}

@@ -335,6 +335,107 @@
 - **Integridad de Datos:** Validaciones en frontend y backend (RLS en Supabase).
 - **UX/UI Consistente:** Paleta de colores, tipografía y espaciado alineados con la identidad de Esencia Boutique.
 
+### [Julio 2026: Hotfix — Invalidación de Caché ISR en Catálogo]
+
+- **Problema Detectado:**
+  - Al editar el género de un producto (ej: "hombre" → "mujer") en el panel admin, el cambio se reflejaba momentáneamente en la UI pero al recargar o volver a entrar al catálogo público, los datos viejos persistían.
+  - Causa raíz: la página `/catalogo` usaba ISR con `revalidate = 60`, lo que significaba que los datos se servían desde caché estática hasta 60 segundos después de una edición.
+
+- **Diagnóstico del Payload:**
+  - Verificado que `AdminDashboard.tsx` ya incluía correctamente `gender: formData.gender` en el objeto de actualización (línea 382). El payload no era el problema.
+  - El problema era exclusivamente de revalidación de caché del lado del servidor.
+
+- **Solución Implementada:**
+  - **Server Action de Revalidación:** Creación de `src/app/actions/revalidate.ts` con función `revalidateCatalogo()` que ejecuta `revalidatePath("/catalogo")` para invalidar caché inmediatamente tras operaciones CRUD.
+  - **Integración en AdminDashboard:** Llamada a `await revalidateCatalogo()` después de cada operación exitosa: crear producto, actualizar producto y eliminar producto.
+  - **Reducción de ISR Fallback:** `revalidate` en `catalogo/page.tsx` reducido de `60` a `10` segundos como capa de seguridad adicional.
+  - **Log de Depuración:** Agregado `console.log("Género enviado a Supabase:", updates.gender)` en `supabase-products.ts` justo antes del `.update()` para rastrear el valor que viaja a la base de datos.
+
+- **Archivos Modificados:**
+  - `src/app/actions/revalidate.ts` — Nuevo (Server Action con `revalidatePath`).
+  - `src/app/admin/AdminDashboard.tsx` — Import y llamada a `revalidateCatalogo()` en 3 puntos: crear, actualizar, eliminar.
+  - `src/app/catalogo/page.tsx` — `revalidate` cambiado de `60` a `10`.
+  - `src/lib/supabase-products.ts` — Console.log de género antes del update.
+
+- **Build:** `npm run build` completado exitosamente sin errores de TypeScript ni advertencias.
+
+### [Julio 2026: Rediseño Completo de Gestión de Categorías en Panel Admin]
+
+#### **Evolución Iterativa de la UI de Categorías**
+- **Iteración 1 — Badges con doble clic:**
+  - Botón "×" (lucide `X`) integrado en cada badge.
+  - Confirmación en dos clics: primer clic tiñe el badge de rojo, segundo clic ejecuta la eliminación.
+  - `handleDeleteCategory(slug)` con consulta Supabase `.delete().eq('slug', slug)` y try-catch para FK constraints.
+  - Toast verde de éxito / rojo de error ("No se puede eliminar una categoría que contiene productos").
+
+- **Iteración 2 — Micro-tarjetas en grid:**
+  - `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` con tarjetas `bg-stone-50 border-stone-200 rounded-md`.
+  - Icono `Trash2` en botón circular con hover rojo.
+  - Descartado: ocupaba demasiado espacio vertical.
+
+- **Iteración 3 — Pills compactos:**
+  - `flex flex-wrap gap-2.5` con píldoras `bg-stone-100 border-stone-200/60 rounded-full`.
+  - Icono `X` con `opacity-40` → `hover:opacity-100 hover:text-red-600 hover:scale-110`.
+  - Descartado: se sentía tosco y el estado rojo parecía error de sistema.
+
+- **Iteración 4 — Lista vertical premium (definitiva):**
+  - **Interface `Category`** extendida con `productCount: number`.
+  - **`loadCategories()`** reescrita: dos consultas eficientes (categorías + productos) con mapa de conteos en memoria.
+  - **Estados:** `categoryToDelete` reemplazado por `isCategoryDeleteModalOpen` + `categoryToDeleteData: Category | null`.
+  - **`handleDeleteCategory(category)`** abre modal; `confirmDeleteCategory()` ejecuta eliminación real.
+  - **UI:** Título `font-serif`, input con soporte Enter, separador `border-b border-stone-200`, filas `py-3.5` con nombre + contador + icono `Trash2` tenue con hover rojo.
+  - **Modal de confirmación:** Mensaje dinámico ("Esta categoría tiene X productos asociados..."), siempre se muestra independientemente del conteo.
+  - **Estado vacío:** Mensaje centrado `text-stone-400 text-sm`.
+
+- **Iteración 5 — Modal flotante:**
+  - Sección fija eliminada del dashboard.
+  - Botón "🏷️ Categorías" en barra de acciones junto a "Nuevo Producto" y "Configurar Contacto".
+  - Modal con `backdrop-blur-md`, `bg-[#FAF7F2]`, `max-w-xl`, `max-h-[85vh] overflow-y-auto`.
+  - Mismo estilo que modales existentes (overlay `rgba(28, 20, 14, 0.55)`).
+
+- **Iteración 6 — Micro-contrastes visuales (final):**
+  - Input de creación: `bg-white shadow-sm` para destacar sobre fondo crema.
+  - Contenedor del listado: `bg-white/50 border border-stone-200/60 rounded-xl p-4`.
+  - Contadores como mini-badges: `bg-stone-200/60 text-[10px] font-semibold uppercase tracking-wider rounded-full`.
+  - Filas interactivas: `hover:bg-white/80 px-2 rounded-lg transition-colors duration-200`.
+
+#### **Archivos Modificados:**
+- `src/app/admin/AdminDashboard.tsx` — Rediseño completo de gestión de categorías.
+
+### [Julio 2026: Modal de Vista Rápida (Quick View) en Catálogo Público]
+
+#### **Implementación en `CatalogGrid.tsx`:**
+- **Estados nuevos:**
+  - `selectedProduct: Product | null` — controla visibilidad del modal.
+  - `activeImageIndex: number` — imagen activa en la galería.
+
+- **Tarjetas clickeables:**
+  - `ProductCard` ahora acepta prop `onClick`.
+  - `cursor-pointer` en contenedor, al hacer clic asigna producto y resetea índice a 0.
+
+- **Modal Quick View (`z-[70]`):**
+  - Overlay `backdrop-blur-md` con `rgba(28, 20, 14, 0.6)`.
+  - Tarjeta `bg-[#FAF7F2] rounded-2xl shadow-2xl max-w-4xl`.
+  - Botón de cierre `X` (lucide) circular con `bg-white/80` en esquina superior derecha.
+  - Cierre al hacer clic en overlay o botón X.
+
+- **Columna 1 — Galería interactiva:**
+  - Imagen principal `aspect-square rounded-xl` con `transition-opacity duration-300`.
+  - Thumbnails 64x64 (`w-16 h-16`) solo si hay más de 1 imagen.
+  - Thumbnail activa: `border-stone-800 shadow-sm`, inactivas: `border-transparent opacity-60 hover:opacity-100`.
+  - Scroll horizontal para múltiples thumbnails.
+
+- **Columna 2 — Información comercial:**
+  - Categoría en `text-xs tracking-wider uppercase text-stone-400`.
+  - Nombre `font-serif text-2xl text-stone-900`.
+  - Precio `font-serif text-xl text-stone-600` con "COP" en gris claro.
+  - Descripción con `max-h-32 overflow-y-auto` para scroll interno.
+  - Materiales con separador " · ".
+  - Botón WhatsApp verde (`bg-[#25D366] hover:bg-[#20BD5A]`) con ícono SVG y mensaje personalizado que incluye nombre y precio.
+
+#### **Archivos Modificados:**
+- `src/app/catalogo/CatalogGrid.tsx` — Import de `X` de lucide-react, nuevos estados, ProductCard con onClick, modal Quick View completo.
+
 ## 🚀 4. Estado de Producción
 
 ### ✅ Proyecto Listo para Deploy
@@ -356,6 +457,7 @@
 - ✅ Carga de imágenes en tiempo real a Supabase Storage
 - ✅ Filtro cruzado doble: Colección (Hombre/Mujer) + Categoría (Manillas/Cadenas/Sets/etc.)
 - ✅ Columna `gender` formal para filtrado robusto (reemplaza lógica frágil de prefijos)
+- ✅ Invalidación de caché ISR con Server Actions (`revalidatePath`) tras operaciones CRUD
 - ✅ 3 productos destacados en la Home
 - ✅ Sistema de reseñas interactivo con localStorage
 - ✅ Botón flotante de WhatsApp (número: 57 320 677 1346)
@@ -382,14 +484,16 @@
 
 **Estructura de archivos:**
 ```
-src/
+ src/
 ├── app/
+│   ├── actions/
+│   │   └── revalidate.ts (Server Action - invalidación de caché ISR)
 │   ├── admin/
 │   │   ├── page.tsx (Server Component - carga inicial)
 │   │   ├── AdminDashboard.tsx (Client Component - CRUD)
 │   │   └── login/page.tsx (Pantalla de autenticación)
 │   ├── catalogo/
-│   │   ├── page.tsx (Server Component)
+│   │   ├── page.tsx (Server Component, revalidate: 10s)
 │   │   └── CatalogGrid.tsx (Client Component con filtros)
 │   ├── layout.tsx
 │   ├── page.tsx
