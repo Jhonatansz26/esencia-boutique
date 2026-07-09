@@ -3,25 +3,6 @@ import { MessageCircle, MapPin } from "lucide-react";
 import Button from "@/components/common/Button";
 import { BRAND_INFO } from "@/constants/data";
 
-function InstagramIcon({ size = 15, strokeWidth = 1.5 }: { size?: number; strokeWidth?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-    </svg>
-  );
-}
-
 const NAV_LINKS = [
   { label: "Inicio", href: "/" },
   { label: "Catálogo", href: "/catalogo" },
@@ -31,12 +12,32 @@ const NAV_LINKS = [
 const INSTAGRAM_LINK =
   "https://www.instagram.com/accesoriosesenciaboutique?igsh=ZG1hc3JxeXQzbmhl";
 
+function InstagramIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
+
 export default function Footer() {
   return (
     <>
       <section
         id="contacto"
-        className="scroll-mt-24 relative bg-[#1A1A1A] py-24 md:py-32 px-6 md:px-16 overflow-hidden"
+        className="scroll-mt-24 relative bg-[#1A1A1A] py-12 sm:py-16 md:py-32 px-6 md:px-16 overflow-hidden"
       >
         <div
           className="absolute inset-0 opacity-[0.04]"
@@ -47,11 +48,11 @@ export default function Footer() {
           }}
         />
 
-        <div className="relative max-w-2xl mx-auto text-center flex flex-col items-center gap-8">
+        <div className="relative max-w-2xl mx-auto text-center flex flex-col items-center gap-6 sm:gap-8">
           <p className="text-xs uppercase tracking-[0.25em] text-[#D4AF37]">
             Contacto
           </p>
-          <h2 className="font-serif text-3xl md:text-4xl text-[#FDFBF7] leading-snug">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-[#FDFBF7] leading-snug px-2">
             Escríbenos, hagamos historia juntos
           </h2>
           <Button
