@@ -12,6 +12,7 @@ import {
 } from "@/lib/supabase-products";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
+import { revalidateCatalogo } from "@/app/actions/revalidate";
 import { X, Save, Loader2, Plus, Trash2, Upload, Edit, Settings } from "lucide-react";
 import Button from "@/components/common/Button";
 import Link from "next/link";
@@ -341,6 +342,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
 
       if (newProduct) {
         await loadProducts();
+        await revalidateCatalogo();
         setIsCreating(false);
         showToast("Producto creado exitosamente", 'success');
       } else {
@@ -395,6 +397,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
 
       if (updated) {
         await loadProducts();
+        await revalidateCatalogo();
         setEditingProduct(null);
         showToast("Producto actualizado exitosamente", 'success');
       } else {
@@ -418,6 +421,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     const success = await deleteProduct(productToDelete);
     if (success) {
       await loadProducts();
+      await revalidateCatalogo();
       showToast("Producto eliminado exitosamente", 'success');
     } else {
       showToast("Error al eliminar el producto", 'error');

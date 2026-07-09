@@ -61,6 +61,8 @@ export async function updateProduct(
     material?: string[];
   }
 ): Promise<Product | null> {
+  console.log("Género enviado a Supabase:", updates.gender);
+
   const { data, error } = await supabase
     .from("products")
     .update({ ...updates, updated_at: new Date().toISOString() })
