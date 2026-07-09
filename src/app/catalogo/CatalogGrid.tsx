@@ -12,6 +12,14 @@ interface CatalogGridProps {
 
 const ITEMS_PER_PAGE = 12;
 
+type CollectionFilter = "all" | "him" | "her";
+
+const COLLECTION_LABELS: Record<CollectionFilter, string> = {
+  all: "Todos",
+  him: "Hombre",
+  her: "Mujer",
+};
+
 const CATEGORY_LABELS: Record<ProductCategory | "all", string> = {
   all: "Todo",
   manilla: "Manillas",
@@ -23,18 +31,34 @@ const CATEGORY_LABELS: Record<ProductCategory | "all", string> = {
 };
 
 export default function CatalogGrid({ initialProducts }: CatalogGridProps) {
+  const [activeCollection, setActiveCollection] = useState<CollectionFilter>("all");
   const [activeCategory, setActiveCategory] = useState<ProductCategory | "all">(
     "all"
   );
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
-  const filteredProducts =
-    activeCategory === "all"
-      ? initialProducts
-      : initialProducts.filter((p) => p.category === activeCategory);
+  // Filtrado cruzado: primero por colección (prefijo del ID), luego por categoría
+  const filteredProducts = initialProducts.filter((product) => {
+    // Filtro de colección por prefijo del ID
+    const collectionMatch =
+      activeCollection === "all" ||
+      (activeCollection === "him" && product.id.startsWith("EBH")) ||
+      (activeCollection === "her" && product.id.startsWith("EBM"));
+
+    // Filtro de categoría
+    const categoryMatch =
+      activeCategory === "all" || product.category === activeCategory;
+
+    return collectionMatch && categoryMatch;
+  });
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
   const hasMore = visibleCount < filteredProducts.length;
+
+  const handleCollectionChange = (collection: CollectionFilter) => {
+    setActiveCollection(collection);
+    setVisibleCount(ITEMS_PER_PAGE);
+  };
 
   const handleCategoryChange = (category: ProductCategory | "all") => {
     setActiveCategory(category);
@@ -47,23 +71,52 @@ export default function CatalogGrid({ initialProducts }: CatalogGridProps) {
 
   return (
     <div>
+      {/* Filtros por colección (género) */}
+      <div className="mb-6">
+        <p className="text-center text-xs uppercase tracking-widest text-gray-500 mb-3">
+          Colección
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          {(Object.keys(COLLECTION_LABELS) as CollectionFilter[]).map(
+            (collection) => (
+              <button
+                key={collection}
+                onClick={() => handleCollectionChange(collection)}
+                className={`px-5 py-2 text-sm tracking-wide transition-all duration-300 rounded-sm ${
+                  activeCollection === collection
+                    ? "bg-[#1A1A1A] text-[#FDFBF7]"
+                    : "bg-transparent border border-[#1A1A1A]/20 text-[#1A1A1A] hover:border-[#1A1A1A]"
+                }`}
+              >
+                {COLLECTION_LABELS[collection]}
+              </button>
+            )
+          )}
+        </div>
+      </div>
+
       {/* Filtros por categoría */}
-      <div className="flex flex-wrap justify-center gap-3 mb-12">
-        {(Object.keys(CATEGORY_LABELS) as (ProductCategory | "all")[]).map(
-          (category) => (
-            <button
-              key={category}
-              onClick={() => handleCategoryChange(category)}
-              className={`px-5 py-2 text-sm tracking-wide transition-all duration-300 rounded-sm ${
-                activeCategory === category
-                  ? "bg-[#1A1A1A] text-[#FDFBF7]"
-                  : "bg-transparent border border-[#1A1A1A]/20 text-[#1A1A1A] hover:border-[#1A1A1A]"
-              }`}
-            >
-              {CATEGORY_LABELS[category]}
-            </button>
-          )
-        )}
+      <div className="mb-12">
+        <p className="text-center text-xs uppercase tracking-widest text-gray-500 mb-3">
+          Categoría
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          {(Object.keys(CATEGORY_LABELS) as (ProductCategory | "all")[]).map(
+            (category) => (
+              <button
+                key={category}
+                onClick={() => handleCategoryChange(category)}
+                className={`px-5 py-2 text-sm tracking-wide transition-all duration-300 rounded-sm ${
+                  activeCategory === category
+                    ? "bg-[#1A1A1A] text-[#FDFBF7]"
+                    : "bg-transparent border border-[#1A1A1A]/20 text-[#1A1A1A] hover:border-[#1A1A1A]"
+                }`}
+              >
+                {CATEGORY_LABELS[category]}
+              </button>
+            )
+          )}
+        </div>
       </div>
 
       {/* Grid de productos */}
@@ -89,7 +142,7 @@ export default function CatalogGrid({ initialProducts }: CatalogGridProps) {
       {/* Mensaje si no hay productos */}
       {filteredProducts.length === 0 && (
         <p className="text-center text-gray-500 italic mt-12">
-          No hay productos disponibles en esta categoría.
+          No hay productos disponibles con los filtros seleccionados.
         </p>
       )}
     </div>

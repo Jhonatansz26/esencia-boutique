@@ -1,11 +1,11 @@
 import Image from "next/image";
 import SectionTitle from "@/components/common/SectionTitle";
 import Button from "@/components/common/Button";
-import { getFeaturedProducts } from "@/data/products";
+import { getFeaturedProducts } from "@/lib/supabase-products";
 import { BRAND_INFO } from "@/constants/data";
 
-export default function ProductGrid() {
-  const featuredProducts = getFeaturedProducts();
+export default async function ProductGrid() {
+  const featuredProducts = await getFeaturedProducts();
 
   return (
     <section id="coleccion" className="py-20 px-6 md:px-16">
@@ -20,8 +20,8 @@ export default function ProductGrid() {
           <div key={product.id} className="flex flex-col">
             <div className="relative w-full aspect-[4/5] overflow-hidden">
               <Image
-                src={product.images[0].src}
-                alt={product.images[0].alt}
+                src={product.images[0]?.src || "/images/placeholder.png"}
+                alt={product.images[0]?.alt || product.name}
                 fill
                 className="object-cover filter contrast-[0.98] brightness-[1.01] hover:scale-105 transition-transform duration-500"
               />

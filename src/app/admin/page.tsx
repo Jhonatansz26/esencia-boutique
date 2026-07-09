@@ -1,22 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { products as initialProducts } from "@/data/products";
 import { Product } from "@/types/product";
-import { X, Save } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { X, Save, Loader2 } from "lucide-react";
 import Button from "@/components/common/Button";
 import Link from "next/link";
 
 export default function AdminPage() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     price: 0,
     description: "",
     featured: false,
   });
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  async function loadProducts() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("id");
+
+    if (error) {
+      console.error("Error loading products:", error);
+    } else if (data) {
+      setProducts(data.map(mapRowToProduct));
+    }
+    setLoading(false);
+  }
+
+  function mapRowToProduct(row: Record<string, unknown>): Product {
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      category: row.category as Product["category"],
+      material: row.material as string[],
+      description: row.description as string,
+      price: Number(row.price),
+      images: row.images as Product["images"],
+      featured: row.featured as boolean,
+      whatsappMessage: row.whatsapp_message as string,
+    };
+  }
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
@@ -28,29 +63,42 @@ export default function AdminPage() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingProduct) return;
+    setSaving(true);
 
-    // TODO: ADVERTENCIA OBLIGATORIA - Conectar con Supabase
-    // Este es un simulador local. Los cambios NO persisten entre recargas.
-    // Para producción, implementar:
-    // 1. Crear tabla 'products' en Supabase con columnas: id, name, price, description, featured, category, material, images, whatsappMessage
-    // 2. Usar @supabase/supabase-js para actualizar: supabase.from('products').update({...}).eq('id', editingProduct.id)
-    // 3. Recargar datos desde Supabase al montar el componente
-    // 4. Implementar autenticación para proteger esta ruta /admin
+    const { error } = await supabase
+      .from("products")
+      .update({
+        name: formData.name,
+        price: formData.price,
+        description: formData.description,
+        featured: formData.featured,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", editingProduct.id);
 
-    const updatedProducts = products.map((p) =>
-      p.id === editingProduct.id
-        ? { ...p, name: formData.name, price: formData.price, description: formData.description, featured: formData.featured }
-        : p
-    );
-    setProducts(updatedProducts);
-    setEditingProduct(null);
+    if (error) {
+      console.error("Error updating product:", error);
+      alert("Error al guardar. Revisa la consola para más detalles.");
+    } else {
+      await loadProducts();
+      setEditingProduct(null);
+    }
+    setSaving(false);
   };
 
   const handleClose = () => {
     setEditingProduct(null);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
+        <Loader2 className="animate-spin text-[#1A1A1A]" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] py-12 px-6 md:px-16">
@@ -64,9 +112,14 @@ export default function AdminPage() {
               Gestiona el catálogo de Esencia Boutique
             </p>
           </div>
-          <Link href="/">
-            <Button variant="outline">Volver al Sitio</Button>
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/">
+              <Button variant="outline">Volver al Sitio</Button>
+            </Link>
+            <Link href="/catalogo">
+              <Button variant="outline">Ver Catálogo</Button>
+            </Link>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
@@ -89,8 +142,8 @@ export default function AdminPage() {
                     <td className="px-6 py-4">
                       <div className="relative w-16 h-16 overflow-hidden rounded">
                         <Image
-                          src={product.images[0].src}
-                          alt={product.images[0].alt}
+                          src={product.images[0]?.src || "/images/placeholder.png"}
+                          alt={product.images[0]?.alt || product.name}
                           fill
                           className="object-cover"
                         />
@@ -126,10 +179,9 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm text-amber-800">
-            <strong>Nota:</strong> Los cambios realizados aquí son solo locales y se pierden al recargar la página. 
-            Para persistencia real, se debe conectar con Supabase.
+        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-800">
+            <strong>Conectado a Supabase:</strong> Los cambios se guardan directamente en la base de datos en tiempo real.
           </p>
         </div>
       </div>
@@ -207,9 +259,17 @@ export default function AdminPage() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button variant="primary" onClick={handleSave} className="flex-1">
-                  <Save size={18} className="inline mr-2" />
-                  Guardar Cambios
+                <Button
+                  variant="primary"
+                  onClick={handleSave}
+                  className="flex-1"
+                >
+                  {saving ? (
+                    <Loader2 className="animate-spin inline mr-2" size={18} />
+                  ) : (
+                    <Save size={18} className="inline mr-2" />
+                  )}
+                  {saving ? "Guardando..." : "Guardar Cambios"}
                 </Button>
                 <Button variant="outline" onClick={handleClose}>
                   Cancelar

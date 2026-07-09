@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { products } from "@/data/products";
+import { getAllProducts } from "@/lib/supabase-products";
 import CatalogGrid from "./CatalogGrid";
 
 export const metadata: Metadata = {
@@ -8,7 +8,11 @@ export const metadata: Metadata = {
     "Explora toda la colección de joyería minimalista de Esencia Boutique. Manillas, cadenas y sets elaborados con materiales premium.",
 };
 
-export default function CatalogoPage() {
+export const dynamic = "force-dynamic";
+
+export default async function CatalogoPage() {
+  const products = await getAllProducts();
+
   return (
     <main className="py-16 px-6 md:px-16">
       <div className="max-w-7xl mx-auto">
