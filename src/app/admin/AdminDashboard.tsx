@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Product, ProductCategory, ProductGender } from "@/types/product";
 import {
@@ -12,12 +12,17 @@ import {
 } from "@/lib/supabase-products";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
-import { X, Save, Loader2, Plus, Trash2, Upload } from "lucide-react";
+import { X, Save, Loader2, Plus, Trash2, Upload, Edit, Settings } from "lucide-react";
 import Button from "@/components/common/Button";
 import Link from "next/link";
 
 interface AdminDashboardProps {
   initialProducts: Product[];
+}
+
+interface Category {
+  slug: string;
+  name: string;
 }
 
 export default function AdminDashboard({ initialProducts }: AdminDashboardProps) {
@@ -28,14 +33,27 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
   );
 
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  
+  // Estados para modales y toasts
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  
+  // Estados para configuración del sitio
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [instagramLink, setInstagramLink] = useState("");
+  const [savingSettings, setSavingSettings] = useState(false);
+  
   const [formData, setFormData] = useState({
-    id: "",
     name: "",
     price: 0,
     description: "",
@@ -45,6 +63,45 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     material: "",
   });
 
+  // Cargar categorías y configuración desde Supabase
+  useEffect(() => {
+    loadCategories();
+    loadSiteSettings();
+  }, []);
+
+  // Auto-ocultar toast después de 4 segundos
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  // Función para mostrar toasts
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+  };
+
+  // Función para generar ID automático
+  const generateProductId = (): string => {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `EBH-${timestamp}-${random}`;
+  };
+
+  async function loadCategories() {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .order("name");
+
+    if (error) {
+      console.error("Error loading categories:", error);
+    } else if (data) {
+      setCategories(data);
+    }
+  }
+
   async function loadProducts() {
     setLoading(true);
     const data = await getAllProducts();
@@ -52,11 +109,89 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     setLoading(false);
   }
 
+  async function loadSiteSettings() {
+    const { data, error } = await supabase
+      .from("site_settings")
+      .select("*")
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      console.error("Error loading site settings:", error);
+    } else if (data) {
+      setWhatsappNumber(data.whatsapp_number || "");
+      setInstagramLink(data.instagram_link || "");
+    }
+  }
+
+  const handleSaveSiteSettings = async () => {
+    setSavingSettings(true);
+    
+    try {
+      const { error } = await supabase
+        .from("site_settings")
+        .upsert({
+          id: 1, // Asumimos que solo hay una fila de configuración
+          whatsapp_number: whatsappNumber,
+          instagram_link: instagramLink,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+      
+      showToast("Configuración guardada exitosamente", 'success');
+      setIsSettingsModalOpen(false);
+    } catch (error) {
+      console.error("Error saving site settings:", error);
+      showToast("Error al guardar la configuración", 'error');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) {
+      showToast("El nombre de la categoría es obligatorio", 'error');
+      return;
+    }
+
+    const slug = newCategoryName
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Eliminar acentos
+      .replace(/[^a-z0-9]+/g, "-") // Reemplazar espacios y caracteres especiales con guiones
+      .replace(/^-+|-+$/g, ""); // Eliminar guiones al inicio y final
+
+    // Verificar si ya existe
+    const { data: existing } = await supabase
+      .from("categories")
+      .select("slug")
+      .eq("slug", slug)
+      .single();
+
+    if (existing) {
+      showToast("Ya existe una categoría con ese nombre", 'error');
+      return;
+    }
+
+    const { error } = await supabase
+      .from("categories")
+      .insert({ slug, name: newCategoryName.trim() });
+
+    if (error) {
+      console.error("Error adding category:", error);
+      showToast("Error al agregar la categoría", 'error');
+    } else {
+      setNewCategoryName("");
+      await loadCategories();
+      showToast("Categoría agregada exitosamente", 'success');
+    }
+  };
+
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setIsCreating(false);
     setFormData({
-      id: product.id,
       name: product.name,
       price: product.price,
       description: product.description,
@@ -73,7 +208,6 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     setIsCreating(true);
     setEditingProduct(null);
     setFormData({
-      id: "",
       name: "",
       price: 0,
       description: "",
@@ -101,22 +235,24 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
 
     if (isCreating) {
       // Crear nuevo producto
-      if (!formData.id || !formData.name) {
-        alert("El ID y el nombre son obligatorios");
+      if (!formData.name) {
+        showToast("El nombre del producto es obligatorio", 'error');
         setSaving(false);
         return;
       }
 
+      const productId = generateProductId();
       let imageUrl = "";
+      
       if (selectedFile) {
-        const uploadedUrl = await uploadProductImage(selectedFile, formData.id);
+        const uploadedUrl = await uploadProductImage(selectedFile, productId);
         if (uploadedUrl) {
           imageUrl = uploadedUrl;
         }
       }
 
       const newProduct = await createProduct({
-        id: formData.id,
+        id: productId,
         name: formData.name,
         category: formData.category,
         gender: formData.gender,
@@ -127,17 +263,24 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
           ? [{ src: imageUrl, alt: formData.name, width: 800, height: 800 }]
           : [],
         featured: formData.featured,
-        whatsappMessage: `Hola! Estoy interesado en la referencia ${formData.id}: ${formData.name}.`,
+        whatsappMessage: `Hola! Estoy interesado en el producto: ${formData.name}.`,
       });
 
       if (newProduct) {
         await loadProducts();
         setIsCreating(false);
+        showToast("Producto creado exitosamente", 'success');
       } else {
-        alert("Error al crear el producto");
+        showToast("Error al crear el producto", 'error');
       }
     } else if (editingProduct) {
       // Actualizar producto existente
+      if (!formData.name) {
+        showToast("El nombre del producto es obligatorio", 'error');
+        setSaving(false);
+        return;
+      }
+
       let newImages = editingProduct.images;
 
       if (selectedFile) {
@@ -170,8 +313,9 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
       if (updated) {
         await loadProducts();
         setEditingProduct(null);
+        showToast("Producto actualizado exitosamente", 'success');
       } else {
-        alert("Error al actualizar el producto");
+        showToast("Error al actualizar el producto", 'error');
       }
     }
 
@@ -180,15 +324,24 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     setFilePreview(null);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) return;
+  const handleDelete = (id: string) => {
+    setProductToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
 
-    const success = await deleteProduct(id);
+  const confirmDelete = async () => {
+    if (!productToDelete) return;
+
+    const success = await deleteProduct(productToDelete);
     if (success) {
       await loadProducts();
+      showToast("Producto eliminado exitosamente", 'success');
     } else {
-      alert("Error al eliminar el producto");
+      showToast("Error al eliminar el producto", 'error');
     }
+    
+    setIsDeleteModalOpen(false);
+    setProductToDelete(null);
   };
 
   const handleClose = () => {
@@ -238,31 +391,80 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
           </div>
         </div>
 
-        <div className="mb-6">
+        {/* Toast de notificación */}
+        {toast && (
+          <div className={`fixed top-6 right-6 z-[100] px-6 py-4 rounded-lg shadow-lg transition-all duration-300 ${
+            toast.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+          }`}>
+            <p className={`text-sm font-medium ${
+              toast.type === 'success' ? 'text-green-800' : 'text-red-800'
+            }`}>
+              {toast.message}
+            </p>
+          </div>
+        )}
+
+        {/* Botones de acción */}
+        <div className="mb-6 flex gap-3">
           <Button variant="primary" onClick={handleCreate}>
             <Plus size={18} className="inline mr-2" />
             Nuevo Producto
           </Button>
+          <Button variant="outline" onClick={() => setIsSettingsModalOpen(true)}>
+            <Settings size={18} className="inline mr-2" />
+            Configurar Contacto
+          </Button>
         </div>
 
+        {/* Sección de Gestión de Categorías */}
+        <div className="mb-8 p-6 bg-white rounded-lg shadow-sm border border-gray-100">
+          <h3 className="text-lg font-medium text-[#1A1A1A] mb-4">Gestionar Categorías</h3>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="Nombre de nueva categoría (ej: Gafas)"
+              className="flex-1 px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 text-sm"
+            />
+            <Button variant="outline" onClick={handleAddCategory}>
+              <Plus size={16} className="inline mr-1" />
+              Agregar
+            </Button>
+          </div>
+          {categories.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {categories.map((cat) => (
+                <span
+                  key={cat.slug}
+                  className="inline-flex items-center px-3 py-1 rounded-sm text-xs bg-[#FAF7F2] text-[#1A1A1A] border border-gray-200"
+                >
+                  {cat.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Tabla de Productos */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-[#1A1A1A] text-[#FDFBF7]">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs uppercase tracking-wider">Imagen</th>
-                  <th className="px-6 py-4 text-left text-xs uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-4 text-left text-xs uppercase tracking-wider">Nombre</th>
-                  <th className="px-6 py-4 text-left text-xs uppercase tracking-wider">Categoría</th>
-                  <th className="px-6 py-4 text-left text-xs uppercase tracking-wider">Precio</th>
-                  <th className="px-6 py-4 text-left text-xs uppercase tracking-wider">Destacado</th>
-                  <th className="px-6 py-4 text-left text-xs uppercase tracking-wider">Acciones</th>
+                  <th className="px-8 py-5 text-left text-xs uppercase tracking-wider">Imagen</th>
+                  <th className="px-8 py-5 text-left text-xs uppercase tracking-wider">ID</th>
+                  <th className="px-8 py-5 text-left text-xs uppercase tracking-wider">Nombre</th>
+                  <th className="px-8 py-5 text-left text-xs uppercase tracking-wider">Categoría</th>
+                  <th className="px-8 py-5 text-left text-xs uppercase tracking-wider">Precio</th>
+                  <th className="px-8 py-5 text-left text-xs uppercase tracking-wider">Destacado</th>
+                  <th className="px-8 py-5 text-left text-xs uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {products.map((product) => (
                   <tr key={product.id} className="hover:bg-[#FAF7F2] transition-colors">
-                    <td className="px-6 py-4">
+                    <td className="px-8 py-6">
                       <div className="relative w-16 h-16 overflow-hidden rounded">
                         <Image
                           src={product.images[0]?.src || "/images/placeholder.png"}
@@ -272,13 +474,13 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                         />
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm font-mono text-gray-600">{product.id}</td>
-                    <td className="px-6 py-4 text-sm text-[#1A1A1A] font-medium">{product.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600 capitalize">{product.category}</td>
-                    <td className="px-6 py-4 text-sm font-serif italic text-stone-500">
+                    <td className="px-8 py-6 text-sm font-mono text-gray-600">{product.id}</td>
+                    <td className="px-8 py-6 text-sm text-[#1A1A1A] font-medium">{product.name}</td>
+                    <td className="px-8 py-6 text-sm text-gray-600 capitalize">{product.category}</td>
+                    <td className="px-8 py-6 text-sm font-serif italic text-stone-500">
                       ${product.price.toLocaleString("es-CO")} COP
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-8 py-6">
                       {product.featured ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#D4AF37]/20 text-[#D4AF37]">
                           Destacado
@@ -287,19 +489,23 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                         <span className="text-xs text-gray-400">—</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 flex gap-3">
-                      <button
-                        onClick={() => handleEdit(product)}
-                        className="text-sm text-[#1A1A1A] hover:text-[#D4AF37] transition-colors font-medium"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product.id)}
-                        className="text-sm text-red-500 hover:text-red-700 transition-colors font-medium"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                    <td className="px-8 py-6">
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => handleEdit(product)}
+                          className="p-2 text-[#1A1A1A] hover:text-[#D4AF37] hover:bg-[#FAF7F2] rounded transition-all"
+                          title="Editar producto"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.id)}
+                          className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-all"
+                          title="Eliminar producto"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -336,20 +542,6 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-600 mb-2">ID</label>
-                <input
-                  type="text"
-                  value={formData.id}
-                  onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-                  disabled={!isCreating}
-                  className={`w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 ${
-                    !isCreating ? "bg-gray-50 text-gray-500" : ""
-                  }`}
-                  placeholder="Ej: EBH-016"
-                />
-              </div>
-
-              <div>
                 <label className="block text-sm text-gray-600 mb-2">Nombre del Producto</label>
                 <input
                   type="text"
@@ -378,13 +570,11 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                   onChange={(e) => setFormData({ ...formData, category: e.target.value as ProductCategory })}
                   className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20"
                 >
-                  <option value="manilla">Manilla</option>
-                  <option value="cadena">Cadena</option>
-                  <option value="set">Set</option>
-                  <option value="collar">Collar</option>
-                  <option value="anillo">Anillo</option>
-                  <option value="aretes">Aretes</option>
-                  <option value="gorras">Gorras</option>
+                  {categories.map((cat) => (
+                    <option key={cat.slug} value={cat.slug}>
+                      {cat.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -481,6 +671,121 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                   {saving ? "Guardando..." : "Guardar Cambios"}
                 </Button>
                 <Button variant="outline" onClick={handleClose}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Eliminación */}
+      {isDeleteModalOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-4 backdrop-blur-md"
+          style={{ backgroundColor: "rgba(28, 20, 14, 0.55)" }}
+        >
+          <div className="bg-[#FAF7F2] rounded-lg shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setProductToDelete(null);
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Cerrar"
+            >
+              <X size={24} />
+            </button>
+
+            <h2 className="font-serif text-2xl text-[#1A1A1A] mb-4 tracking-wide">
+              Confirmar Eliminación
+            </h2>
+
+            <p className="text-gray-600 mb-6">
+              ¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.
+            </p>
+
+            <div className="flex gap-3">
+              <Button 
+                variant="primary" 
+                onClick={confirmDelete}
+                className="flex-1 bg-stone-900 hover:bg-red-800 text-white transition-colors duration-300"
+              >
+                <Trash2 size={18} className="inline mr-2" />
+                Eliminar
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setProductToDelete(null);
+                }}
+                className="border-stone-300 text-stone-700 hover:bg-stone-100 hover:text-stone-900 transition-colors duration-300"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Configuración del Sitio */}
+      {isSettingsModalOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-4 backdrop-blur-md"
+          style={{ backgroundColor: "rgba(28, 20, 14, 0.55)" }}
+        >
+          <div className="bg-[#FAF7F2] rounded-lg shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setIsSettingsModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Cerrar"
+            >
+              <X size={24} />
+            </button>
+
+            <h2 className="font-serif text-2xl text-[#1A1A1A] mb-6 tracking-wide">
+              Configurar Contacto
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-600 mb-2">Número de WhatsApp</label>
+                <input
+                  type="text"
+                  value={whatsappNumber}
+                  onChange={(e) => setWhatsappNumber(e.target.value)}
+                  placeholder="Ej: 573001234567"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-2">Enlace de Instagram</label>
+                <input
+                  type="text"
+                  value={instagramLink}
+                  onChange={(e) => setInstagramLink(e.target.value)}
+                  placeholder="Ej: https://www.instagram.com/esenciaboutique"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 text-sm"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="primary" 
+                  onClick={handleSaveSiteSettings}
+                  className="flex-1"
+                >
+                  {savingSettings ? (
+                    <Loader2 className="animate-spin inline mr-2" size={16} />
+                  ) : (
+                    <Save size={16} className="inline mr-2" />
+                  )}
+                  {savingSettings ? "Guardando..." : "Guardar Configuración"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsSettingsModalOpen(false)}
+                >
                   Cancelar
                 </Button>
               </div>

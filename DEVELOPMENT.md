@@ -206,7 +206,91 @@
   - TypeScript: tipos estrictos en todo el código (`ProductGender`, `ProductCategory`, `ProductImage`).
   - PostgreSQL: columna `gender` con constraint NOT NULL y valores válidos.
   - Supabase Storage: políticas RLS para prevenir uploads no autorizados.
-  - Middleware: protección de rutas administrativas sin afectar rutas públicas.
+   - Middleware: protección de rutas administrativas sin afectar rutas públicas.
+
+### [Julio 2026: Refactorización Avanzada y Optimización UX/UI]
+
+#### **Base de Datos Dinámica y Gestión de Categorías**
+- **Creación de Tabla `categories`:**
+  - Implementación de tabla dinámica en Supabase con columnas `slug` (TEXT PK) y `name` (TEXT).
+  - Políticas RLS configuradas para permitir lectura pública y escritura restringida a usuarios autenticados.
+  - Función `loadCategories()` en `AdminDashboard.tsx` para cargar categorías en tiempo real.
+  - Función `handleAddCategory()` con generación automática de slugs (normalización de acentos, espacios y caracteres especiales).
+  - Validación de duplicados antes de inserción mediante consulta `SELECT` previa.
+  - Interfaz de gestión de categorías en el panel admin con input y botón "Agregar".
+
+- **Creación de Tabla `site_settings`:**
+  - Tabla de configuración global con columnas: `id` (INTEGER PK), `whatsapp_number` (TEXT), `instagram_link` (TEXT), `updated_at` (TIMESTAMPTZ).
+  - Función `loadSiteSettings()` para cargar configuración al montar el componente.
+  - Función `handleSaveSiteSettings()` con operación `upsert` para insertar o actualizar.
+  - Modal compacto accionado por botón "⚙️ Configurar Contacto" (reemplaza tarjeta estática grande).
+  - Cierre automático del modal tras guardado exitoso con toast de confirmación.
+
+#### **Panel de Administración: Refactorización Completa**
+- **Automatización de IDs:**
+  - Eliminación del campo "ID" manual del formulario de crear/editar producto.
+  - Implementación de función `generateProductId()` que genera IDs únicos con formato `EBH-{timestamp}-{random}`.
+  - Validación simplificada: solo el nombre del producto es obligatorio.
+
+- **Rediseño Estético de la Tabla de Productos:**
+  - Padding ampliado: `px-8 py-6` (antes `px-6 py-4`) para mayor espaciado visual.
+  - Columna "Acciones" rediseñada con iconos de Lucide React:
+    - Botón "Editar": icono `Edit` con hover dorado (`hover:text-[#D4AF37] hover:bg-[#FAF7F2]`).
+    - Botón "Eliminar": icono `Trash2` con hover rojo (`hover:text-red-700 hover:bg-red-50`).
+  - Tooltips agregados con atributo `title` para mejor accesibilidad.
+  - Transiciones suaves (`transition-all`) en todos los elementos interactivos.
+
+- **Sistema de Notificaciones Moderno:**
+  - **Eliminación total de `alert()` y `confirm()` nativos del navegador.**
+  - **Sistema de Toasts asíncronos:**
+    - Estado `toast` con estructura `{ message: string; type: 'success' | 'error' }`.
+    - Función `showToast()` para mostrar notificaciones.
+    - Auto-ocultación después de 4 segundos mediante `useEffect` con `setTimeout`.
+    - Posicionamiento fijo en esquina superior derecha (`fixed top-6 right-6 z-[100]`).
+    - Estilos diferenciados: verde para éxito (`bg-green-50 border-green-200`), rojo para error (`bg-red-50 border-red-200`).
+  - **Modal de Confirmación de Eliminación:**
+    - Overlay oscuro con desenfoque (`backdrop-blur-md`, `rgba(28, 20, 14, 0.55)`).
+    - Estados `isDeleteModalOpen` y `productToDelete` para control de visibilidad.
+    - Botón "Eliminar" con estilo sofisticado: `bg-stone-900 hover:bg-red-800 text-white transition-colors duration-300`.
+    - Botón "Cancelar" con contraste corregido: `border-stone-300 text-stone-700 hover:bg-stone-100 hover:text-stone-900`.
+    - Cierre automático tras eliminación exitosa.
+
+#### **Catálogo Público: Programación Defensiva y Filtros Dinámicos**
+- **Filtros Dinámicos desde Supabase:**
+  - Eliminación del objeto estático `CATEGORY_LABELS` en `CatalogGrid.tsx`.
+  - Implementación de `useEffect` para cargar categorías desde tabla `categories` de Supabase.
+  - Estado `categories` para almacenar categorías dinámicas.
+  - Renderizado dinámico de botones de filtro mediante `categories.map()`.
+  - Botón "Todo" agregado manualmente como primera opción.
+  - Actualización automática de la barra de filtros cuando se agregan nuevas categorías en el panel admin.
+
+- **Programación Defensiva con Optional Chaining:**
+  - **Problema:** Crash de renderizado (`Cannot read properties of undefined (reading 'src')`) cuando un producto tenía array `images` vacío o malformado.
+  - **Solución:** Implementación de optional chaining en `CatalogGrid.tsx`:
+    ```typescript
+    src={product.images?.[0]?.src || '/images/placeholder.png'}
+    alt={product.images?.[0]?.alt || product.name}
+    ```
+  - Verificación de array válido antes de renderizar imagen.
+  - Imagen placeholder por defecto (`/images/placeholder.png`) como fallback.
+  - Texto alternativo usa nombre del producto como fallback.
+
+#### **Correcciones de Bugs y Refinamientos Visuales**
+- **Bug de Contraste en Botón "Cancelar":**
+  - **Problema:** Texto se volvía blanco al hacer hover sobre fondo gris claro, causando invisibilidad.
+  - **Solución:** Agregada clase `hover:text-stone-900` para forzar texto oscuro en estado hover.
+  - Transición suave de 300ms aplicada tanto para fondo como para texto (`transition-colors duration-300`).
+
+- **Refinamiento Estético de Botones Destructivos:**
+  - Cambio de rojo brillante agresivo (`bg-red-600 hover:bg-red-700`) a tono borgoña sofisticado.
+  - Nuevo estilo: `bg-stone-900 hover:bg-red-800 text-white transition-colors duration-300`.
+  - Transición de gris oscuro a rojo borgoña profundo para mantener estética minimalista y lujosa.
+
+#### **Estado del Build y Calidad de Código**
+- **Compilación Exitosa:** `npm run build` sin errores de TypeScript ni advertencias.
+- **Tipado Estricto:** Todas las nuevas interfaces y tipos correctamente definidos en `src/types/product.ts`.
+- **Integridad de Datos:** Validaciones en frontend y backend (RLS en Supabase).
+- **UX/UI Consistente:** Paleta de colores, tipografía y espaciado alineados con la identidad de Esencia Boutique.
 
 ## 🚀 4. Estado de Producción
 

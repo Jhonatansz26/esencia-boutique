@@ -1,13 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Product, ProductCategory } from "@/types/product";
 import { BRAND_INFO } from "@/constants/data";
+import { createBrowserClient } from "@supabase/ssr";
 import Button from "@/components/common/Button";
 
 interface CatalogGridProps {
   initialProducts: Product[];
+}
+
+interface Category {
+  slug: string;
+  name: string;
 }
 
 const ITEMS_PER_PAGE = 12;
@@ -20,23 +26,33 @@ const COLLECTION_LABELS: Record<CollectionFilter, string> = {
   her: "Mujer",
 };
 
-const CATEGORY_LABELS: Record<ProductCategory | "all", string> = {
-  all: "Todo",
-  manilla: "Manillas",
-  cadena: "Cadenas",
-  set: "Sets",
-  collar: "Collares",
-  anillo: "Anillos",
-  aretes: "Aretes",
-  gorras: "Gorras",
-};
-
 export default function CatalogGrid({ initialProducts }: CatalogGridProps) {
-  const [activeCollection, setActiveCollection] = useState<CollectionFilter>("all");
-  const [activeCategory, setActiveCategory] = useState<ProductCategory | "all">(
-    "all"
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [activeCollection, setActiveCollection] = useState<CollectionFilter>("all");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+
+  // Cargar categorías desde Supabase
+  useEffect(() => {
+    async function loadCategories() {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .order("name");
+
+      if (error) {
+        console.error("Error loading categories:", error);
+      } else if (data) {
+        setCategories(data);
+      }
+    }
+    loadCategories();
+  }, []);
 
   // Filtrado cruzado: primero por colección (género), luego por categoría
   const filteredProducts = initialProducts.filter((product) => {
@@ -61,7 +77,7 @@ export default function CatalogGrid({ initialProducts }: CatalogGridProps) {
     setVisibleCount(ITEMS_PER_PAGE);
   };
 
-  const handleCategoryChange = (category: ProductCategory | "all") => {
+  const handleCategoryChange = (category: string) => {
     setActiveCategory(category);
     setVisibleCount(ITEMS_PER_PAGE);
   };
@@ -102,21 +118,29 @@ export default function CatalogGrid({ initialProducts }: CatalogGridProps) {
           Categoría
         </p>
         <div className="flex flex-wrap justify-center gap-3">
-          {(Object.keys(CATEGORY_LABELS) as (ProductCategory | "all")[]).map(
-            (category) => (
-              <button
-                key={category}
-                onClick={() => handleCategoryChange(category)}
-                className={`px-5 py-2 text-sm tracking-wide transition-all duration-300 rounded-sm ${
-                  activeCategory === category
-                    ? "bg-[#1A1A1A] text-[#FDFBF7]"
-                    : "bg-transparent border border-[#1A1A1A]/20 text-[#1A1A1A] hover:border-[#1A1A1A]"
-                }`}
-              >
-                {CATEGORY_LABELS[category] ?? category}
-              </button>
-            )
-          )}
+          <button
+            onClick={() => handleCategoryChange("all")}
+            className={`px-5 py-2 text-sm tracking-wide transition-all duration-300 rounded-sm ${
+              activeCategory === "all"
+                ? "bg-[#1A1A1A] text-[#FDFBF7]"
+                : "bg-transparent border border-[#1A1A1A]/20 text-[#1A1A1A] hover:border-[#1A1A1A]"
+            }`}
+          >
+            Todo
+          </button>
+          {categories.map((category) => (
+            <button
+              key={category.slug}
+              onClick={() => handleCategoryChange(category.slug)}
+              className={`px-5 py-2 text-sm tracking-wide transition-all duration-300 rounded-sm ${
+                activeCategory === category.slug
+                  ? "bg-[#1A1A1A] text-[#FDFBF7]"
+                  : "bg-transparent border border-[#1A1A1A]/20 text-[#1A1A1A] hover:border-[#1A1A1A]"
+              }`}
+            >
+              {category.name}
+            </button>
+          ))}
         </div>
       </div>
 
