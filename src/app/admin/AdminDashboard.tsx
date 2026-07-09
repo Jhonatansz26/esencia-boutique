@@ -10,7 +10,8 @@ import {
   uploadProductImage,
   getAllProducts,
 } from "@/lib/supabase-products";
-import { supabase } from "@/lib/supabase";
+import { createBrowserClient } from "@supabase/ssr";
+import { useRouter } from "next/navigation";
 import { X, Save, Loader2, Plus, Trash2, Upload } from "lucide-react";
 import Button from "@/components/common/Button";
 import Link from "next/link";
@@ -20,6 +21,12 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ initialProducts }: AdminDashboardProps) {
+  const router = useRouter();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -192,8 +199,13 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/admin/login";
+    try {
+      await supabase.auth.signOut();
+      // Forzar redirección y refrescar el estado del middleware
+      window.location.href = "/admin/login";
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
   };
 
   if (loading) {
