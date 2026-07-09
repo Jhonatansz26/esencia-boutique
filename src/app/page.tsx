@@ -5,6 +5,7 @@ import ProductGrid from "@/components/sections/ProductGrid";
 import Values from "@/components/sections/Values";
 import Reviews from "@/components/sections/Reviews";
 import SectionDivider from "@/components/common/SectionDivider";
+import ScrollReveal from "@/components/common/ScrollReveal";
 
 export default function Home() {
   return (
@@ -12,19 +13,29 @@ export default function Home() {
       <Hero />
       <SectionDivider />
 
-      <BrandStory />
+      <ScrollReveal>
+        <BrandStory />
+      </ScrollReveal>
       <SectionDivider />
 
-      <Materials />
+      <ScrollReveal>
+        <Materials />
+      </ScrollReveal>
       <SectionDivider />
 
-      <ProductGrid />
+      <ScrollReveal>
+        <ProductGrid />
+      </ScrollReveal>
       <SectionDivider />
 
-      <Values />
+      <ScrollReveal>
+        <Values />
+      </ScrollReveal>
       <SectionDivider />
 
-      <Reviews />
+      <ScrollReveal>
+        <Reviews />
+      </ScrollReveal>
     </main>
   );
 }

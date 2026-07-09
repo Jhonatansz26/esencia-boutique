@@ -18,8 +18,6 @@ const materials = [
   },
 ];
 
-const stagger = ["mt-0", "mt-12", "mt-6"];
-
 export default function Materials() {
   return (
     <section
@@ -35,27 +33,27 @@ export default function Materials() {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          {materials.map((material, index) => (
+          {materials.map((material) => (
             <div
               key={material.name}
-              className={`group relative overflow-hidden cursor-default ${stagger[index]}`}
+              className="group relative overflow-hidden cursor-default"
             >
-              <div className="relative aspect-[3/4] w-full overflow-hidden">
+              <div className="relative w-full md:h-[500px] h-[400px] overflow-hidden">
                 <Image
                   src={material.image}
                   alt={material.name}
                   fill
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                   sizes="(max-width: 768px) 90vw, 33vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
               </div>
 
-              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 transition-transform duration-500 ease-out group-hover:-translate-y-1">
+              <div className="absolute bottom-0 left-0 right-0 flex flex-col justify-end p-6 md:p-8 pb-8 md:pb-10 z-10 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
                 <h3 className="font-serif text-xl text-white mb-2">
                   {material.name}
                 </h3>
-                <p className="text-white/70 text-sm tracking-wide leading-relaxed">
+                <p className="text-white/80 text-sm tracking-wide leading-relaxed">
                   {material.description}
                 </p>
               </div>

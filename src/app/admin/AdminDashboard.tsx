@@ -10,6 +10,7 @@ import {
   uploadProductImage,
   getAllProducts,
 } from "@/lib/supabase-products";
+import { compressImage } from "@/lib/image-compression";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { revalidateCatalogo } from "@/app/actions/revalidate";
@@ -43,6 +44,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
   const [saving, setSaving] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
   
   // Estados para modales y toasts
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -284,13 +286,28 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     setFilePreview(null);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
+    if (!file) return;
+
+    setIsCompressing(true);
+    try {
+      const compressed = await compressImage(file, {
+        maxWidth: 1600,
+        maxHeight: 1600,
+        quality: 0.82,
+      });
+      setSelectedFile(compressed);
       const reader = new FileReader();
       reader.onload = () => setFilePreview(reader.result as string);
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressed);
+    } catch (error) {
+      console.error("Error al comprimir la imagen:", error);
+      showToast("Error al procesar la imagen. Intenta con otra.", "error");
+      setSelectedFile(null);
+      setFilePreview(null);
+    } finally {
+      setIsCompressing(false);
     }
   };
 
@@ -480,14 +497,19 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
 
         {/* Toast de notificación */}
         {toast && (
-          <div className={`fixed top-6 right-6 z-[100] px-6 py-4 rounded-lg shadow-lg transition-all duration-300 ${
-            toast.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
-          }`}>
-            <p className={`text-sm font-medium ${
-              toast.type === 'success' ? 'text-green-800' : 'text-red-800'
-            }`}>
-              {toast.message}
-            </p>
+          <div
+            className={`fixed top-6 right-6 z-[100] flex items-center gap-3 px-5 py-4 rounded-sm shadow-lg border backdrop-blur-sm transition-all duration-300 ${
+              toast.type === "success"
+                ? "bg-[#1A1A1A] border-[#D4AF37]/40 text-[#FDFBF7]"
+                : "bg-[#1A1A1A] border-red-900/50 text-[#FDFBF7]"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                toast.type === "success" ? "bg-[#D4AF37]" : "bg-red-500"
+              }`}
+            />
+            <p className="text-sm tracking-wide">{toast.message}</p>
           </div>
         )}
 
@@ -759,13 +781,23 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                       />
                     </div>
                   ) : null}
-                  <label className="cursor-pointer inline-flex items-center gap-2 text-sm text-gray-600 hover:text-[#1A1A1A]">
-                    <Upload size={18} />
-                    <span>{filePreview ? "Cambiar imagen" : "Subir imagen"}</span>
+                  <label className={`inline-flex items-center gap-2 text-sm ${isCompressing ? 'text-gray-400 cursor-wait' : 'text-gray-600 hover:text-[#1A1A1A] cursor-pointer'}`}>
+                    {isCompressing ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>Comprimiendo imagen...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={18} />
+                        <span>{filePreview ? "Cambiar imagen" : "Subir imagen"}</span>
+                      </>
+                    )}
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleFileChange}
+                      disabled={isCompressing}
                       className="hidden"
                     />
                   </label>

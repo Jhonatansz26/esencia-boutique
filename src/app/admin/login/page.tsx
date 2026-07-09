@@ -29,9 +29,11 @@ export default function AdminLoginPage() {
     });
 
     if (error) {
-      setError(error.message === "Invalid login credentials" 
-        ? "Credenciales inválidas. Verifica tu email y contraseña." 
-        : error.message);
+      setError(
+        error.message === "Invalid login credentials"
+          ? "Credenciales inválidas. Verifica tu email y contraseña."
+          : error.message
+      );
       setLoading(false);
     } else {
       router.push("/admin");
@@ -42,54 +44,58 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center px-6">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
+          <p className="text-xs uppercase tracking-[0.25em] text-stone-400 mb-3">
+            Acceso privado
+          </p>
           <h1 className="font-serif text-3xl text-[#1A1A1A] tracking-wide mb-2">
             Panel de Administración
           </h1>
-          <p className="text-gray-600 text-sm">
-            Inicia sesión para gestionar el catálogo
-          </p>
+          <div className="h-px w-10 bg-[#D4AF37] mx-auto mt-4" />
         </div>
 
-        <form onSubmit={handleLogin} className="bg-white rounded-lg shadow-sm border border-gray-100 p-8 space-y-6">
+        <form
+          onSubmit={handleLogin}
+          className="bg-transparent border border-[#1A1A1A]/10 p-8 md:p-10 space-y-6"
+        >
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-sm text-sm">
+            <div className="border border-red-900/20 bg-red-900/5 text-red-800 px-4 py-3 rounded-sm text-sm tracking-wide">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm text-gray-600 mb-2">
+            <label className="block text-xs uppercase tracking-[0.15em] text-gray-500 mb-2">
               Correo electrónico
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20"
+              className="w-full px-4 py-3 border border-[#1A1A1A]/15 rounded-sm bg-transparent text-[#1A1A1A] tracking-wide focus:outline-none focus:ring-0 focus:border-[#D4AF37] transition-colors duration-300"
               placeholder="admin@esenciaboutique.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-600 mb-2">
+            <label className="block text-xs uppercase tracking-[0.15em] text-gray-500 mb-2">
               Contraseña
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20"
+              className="w-full px-4 py-3 border border-[#1A1A1A]/15 rounded-sm bg-transparent text-[#1A1A1A] tracking-wide focus:outline-none focus:ring-0 focus:border-[#D4AF37] transition-colors duration-300"
               placeholder="••••••••"
               required
             />
           </div>
 
-          <Button variant="primary" className="w-full" type="submit">
+          <Button variant="primary" className="w-full tracking-widest uppercase text-sm" type="submit">
             {loading ? (
               <>
-                <Loader2 className="animate-spin inline mr-2" size={18} />
+                <Loader2 className="animate-spin inline mr-2" size={16} />
                 Iniciando sesión...
               </>
             ) : (
@@ -98,7 +104,7 @@ export default function AdminLoginPage() {
           </Button>
         </form>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
+        <p className="text-center text-xs tracking-widest text-gray-400 mt-8 uppercase">
           Esencia Boutique © 2026
         </p>
       </div>
