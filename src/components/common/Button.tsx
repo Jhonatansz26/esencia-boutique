@@ -7,6 +7,7 @@ interface ButtonProps {
   href?: string;
   variant?: "primary" | "outline";
   className?: string;
+  type?: "button" | "submit" | "reset";
 }
 
 export default function Button({
@@ -15,6 +16,7 @@ export default function Button({
   href,
   variant = "primary",
   className = "",
+  type = "button",
 }: ButtonProps) {
   const baseStyles =
     "rounded-sm px-6 py-3 tracking-wide transition-all duration-300 hover:bg-opacity-90 font-medium";
@@ -27,6 +29,20 @@ export default function Button({
   const combinedStyles = `${baseStyles} ${variantStyles} ${className}`.trim();
 
   if (href) {
+    // Si es una URL externa, usar <a> nativo con target="_blank"
+    if (href.startsWith("http://") || href.startsWith("https://")) {
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={combinedStyles}
+        >
+          {children}
+        </a>
+      );
+    }
+    // Si es una ruta interna, usar <Link> de Next.js
     return (
       <Link href={href} className={combinedStyles}>
         {children}
@@ -35,7 +51,7 @@ export default function Button({
   }
 
   return (
-    <button onClick={onClick} className={combinedStyles}>
+    <button onClick={onClick} type={type} className={combinedStyles}>
       {children}
     </button>
   );

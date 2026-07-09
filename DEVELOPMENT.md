@@ -118,7 +118,95 @@
   - Hover en cards con `group-hover:scale-105` y transición suave.
   - Materiales mostrados con separador " · " y tracking amplio.
   - Precio con estilo serif itálico consistente con el resto del sitio.
-  - Botón "Consultar" con variante outline y tamaño reducido.
+   - Botón "Consultar" con variante outline y tamaño reducido.
+
+### [Fase: Migración a Base de Datos (Supabase)]
+- **Transición de Datos Estáticos a Dinámicos:**
+  - Migración completa de `src/data/products.ts` (archivo estático local) a base de datos PostgreSQL en Supabase.
+  - Creación de tabla `products` con esquema completo: `id` (TEXT PK), `name`, `category`, `material` (TEXT[]), `description`, `price` (NUMERIC), `images` (JSONB), `featured` (BOOLEAN), `whatsapp_message`, timestamps.
+  - Configuración de políticas RLS (Row Level Security) para permitir lectura pública y escritura restringida.
+  - Seed inicial de 27 productos: 15 masculinos reales (EBH-001 a EBH-015) + 12 placeholders femeninos (EBM-001 a EBM-012).
+- **Integración con Supabase:**
+  - Instalación de `@supabase/supabase-js` y `@supabase/ssr`.
+  - Creación de cliente Supabase en `src/lib/supabase.ts` con variables de entorno.
+  - Funciones CRUD en `src/lib/supabase-products.ts`: `getAllProducts()`, `getFeaturedProducts()`, `getProductsByCategory()`, `updateProduct()`, `createProduct()`, `deleteProduct()`, `uploadProductImage()`.
+  - Refactorización de componentes para consumir datos dinámicos desde Supabase.
+
+### [Fase: Filtro Cruzado Doble en el Catálogo]
+- **Sistema de Filtrado Independiente y Combinable:**
+  - Implementación de dos filas de filtros en `src/app/catalogo/CatalogGrid.tsx`: Colección (Todos/Hombre/Mujer) y Categoría (Todo/Manillas/Cadenas/Sets/Collares/Anillos/Aretes).
+  - Lógica de filtrado cruzado: ambos filtros son independientes y se combinan con AND lógico.
+  - Estados separados: `activeCollection` y `activeCategory` con reset automático de paginación al cambiar filtros.
+  - Mensaje dinámico cuando no hay productos: "No hay productos disponibles con los filtros seleccionados."
+  - Tipografía minimalista: etiquetas descriptivas "Colección" y "Categoría" arriba de cada fila de botones.
+
+### [Fase: Sistema de Autenticación y Seguridad Avanzada]
+- **Gestión de Sesiones con @supabase/ssr:**
+  - Instalación de `@supabase/ssr` para manejo seguro de cookies de autenticación en Next.js App Router.
+  - Configuración de cliente Supabase con cookies en `src/middleware.ts` usando `createServerClient`.
+- **Middleware de Protección de Rutas:**
+  - Creación de `src/middleware.ts` para interceptar rutas `/admin`.
+  - Redirección automática a `/admin/login` si no hay sesión activa.
+  - Normalización de trailing slashes para evitar bucles infinitos (`ERR_TOO_MANY_REDIRECTS`).
+  - Redirección inversa: usuarios autenticados que intentan acceder a `/admin/login` son enviados a `/admin`.
+- **Pantalla de Login Privada:**
+  - Creación de `src/app/admin/login/page.tsx` con formulario minimalista.
+  - Uso de `supabase.auth.signInWithPassword` para autenticación.
+  - Manejo de errores con mensajes amigables ("Credenciales inválidas").
+  - Redirección automática a `/admin` después del login exitoso.
+  - Diseño elegante con paleta crema/antracita consistente con la marca.
+
+### [Fase: Almacenamiento en la Nube (Supabase Storage)]
+- **Configuración del Bucket 'product-images':**
+  - Creación de bucket público en Supabase Storage para imágenes de productos.
+  - Configuración de políticas RLS: lectura pública, inserción/borrado restringido a usuarios autenticados.
+  - Actualización de `next.config.ts` con `remotePatterns` para permitir imágenes de Supabase Storage (`nlsehgaihqdyixbfluur.supabase.co/storage/v1/object/public/**`).
+- **Carga de Imágenes en Tiempo Real:**
+  - Función `uploadProductImage()` en `src/lib/supabase-products.ts` para subir archivos al bucket.
+  - Generación automática de nombres de archivo únicos con timestamp: `${productId}/${Date.now()}.${ext}`.
+  - Obtención de URLs públicas mediante `supabase.storage.from().getPublicUrl()`.
+  - Almacenamiento de URLs en formato JSONB dentro de la columna `images` de la base de datos.
+  - Input tipo archivo en el panel admin con preview de imagen antes de subir.
+  - Soporte para reemplazo de imágenes existentes con confirmación visual.
+
+### [Fase: Operaciones CRUD Completas en Panel Admin]
+- **Refactorización de Arquitectura:**
+  - Separación de responsabilidades: `src/app/admin/page.tsx` (Server Component) para carga inicial de datos + `src/app/admin/AdminDashboard.tsx` (Client Component) para gestión de estados.
+  - Server Component ejecuta `await getAllProducts()` en el servidor y pasa `initialProducts` como prop.
+  - Client Component maneja estados locales: `products`, `editingProduct`, `isCreating`, `formData`, `selectedFile`, `filePreview`.
+- **Funcionalidades CRUD:**
+  - **Crear:** Modal con formulario completo (ID, nombre, precio, categoría, género, materiales, descripción, imagen, destacado). Validación de campos obligatorios. Generación automática de `whatsappMessage`.
+  - **Editar:** Pre-carga de datos existentes en el formulario. Actualización selectiva de campos. Soporte para cambio de imagen con preview.
+  - **Eliminar:** Confirmación de seguridad con `confirm()` nativo. Eliminación permanente de registros. Recarga automática de la tabla.
+  - **Subir Imágenes:** Input tipo archivo con preview. Upload a Supabase Storage. Actualización de URL en la base de datos.
+- **UI/UX del Panel:**
+  - Tabla responsive con columnas: Imagen (thumbnail), ID, Nombre, Categoría, Precio, Destacado, Acciones.
+  - Botón "Nuevo Producto" destacado en la parte superior.
+  - Botón "Cerrar Sesión" para logout manual.
+  - Modal con scroll interno para pantallas pequeñas (`max-h-[90vh] overflow-y-auto`).
+  - Estados de carga con spinner de Lucide (`Loader2`).
+  - Mensaje de confirmación: "Conectado a Supabase: Los cambios se guardan directamente en la base de datos en tiempo real."
+
+### [Fase: Evolución del Esquema y Refactorización Senior]
+- **Migración de Lógica Frágil a Columna Formal:**
+  - **Problema:** Filtrado por género dependía de prefijos de ID (`EBH` para hombre, `EBM` para mujer), lo cual era frágil y no escalable.
+  - **Solución:** Agregada columna obligatoria `gender` (TEXT) con valores: `'hombre' | 'mujer' | 'unisex'` en la tabla `products`.
+  - Actualización de tipo `Product` en `src/types/product.ts` con `gender: ProductGender`.
+  - Refactorización de `mapRowToProduct()` para mapear la nueva columna.
+  - Actualización de `createProduct()` y `updateProduct()` para incluir `gender`.
+  - Refactorización de `CatalogGrid.tsx`: filtro ahora usa `product.gender === "hombre"` en lugar de `product.id.startsWith("EBH")`.
+  - Agregado campo "Género / Colección" en el formulario del panel admin con opciones: Hombre, Mujer, Unisex.
+- **Limpieza Profunda de Código Muerto:**
+  - Eliminación de interfaz `Product` duplicada en `src/types/index.ts` (ahora solo contiene `Review`).
+  - Eliminación de constante `FEATURED_PRODUCTS` obsoleta en `src/constants/data.ts`.
+  - Eliminación de archivo `src/data/products.ts` (reemplazado por Supabase).
+  - Corrección de imports en `src/constants/data.ts` para usar `Product` desde `@/types/product`.
+  - Actualización de `Button.tsx` para aceptar prop `type` (button/submit/reset) requerida por formularios.
+- **Integridad de Datos Garantizada:**
+  - TypeScript: tipos estrictos en todo el código (`ProductGender`, `ProductCategory`, `ProductImage`).
+  - PostgreSQL: columna `gender` con constraint NOT NULL y valores válidos.
+  - Supabase Storage: políticas RLS para prevenir uploads no autorizados.
+  - Middleware: protección de rutas administrativas sin afectar rutas públicas.
 
 ## 🚀 4. Estado de Producción
 
@@ -130,37 +218,52 @@
 
 **Rutas generadas:**
 - `/` - Landing page principal
-- `/catalogo` - Catálogo completo interactivo
+- `/catalogo` - Catálogo completo interactivo con filtros cruzados
+- `/admin` - Panel de administración protegido (requiere autenticación)
+- `/admin/login` - Pantalla de acceso privada
 
 **Características implementadas:**
-- ✅ 15 productos reales del catálogo EBH con imágenes locales
+- ✅ Base de datos PostgreSQL en Supabase con 27 productos (15 masculinos + 12 femeninos)
+- ✅ Sistema de autenticación con sesiones seguras (@supabase/ssr)
+- ✅ Panel de administración completo con operaciones CRUD
+- ✅ Carga de imágenes en tiempo real a Supabase Storage
+- ✅ Filtro cruzado doble: Colección (Hombre/Mujer) + Categoría (Manillas/Cadenas/Sets/etc.)
+- ✅ Columna `gender` formal para filtrado robusto (reemplaza lógica frágil de prefijos)
 - ✅ 3 productos destacados en la Home
 - ✅ Sistema de reseñas interactivo con localStorage
 - ✅ Botón flotante de WhatsApp (número: 57 320 677 1346)
-- ✅ Filtros por categoría y paginación en catálogo
+- ✅ Paginación "Ver más" con 12 productos por página
 - ✅ Diseño responsive mobile-first
-- ✅ Optimización de imágenes con Next.js Image
+- ✅ Optimización de imágenes con Next.js Image (priority, lazy loading)
 - ✅ SEO optimizado con metadatos dinámicos
 - ✅ Tipografía serif (Playfair Display) + sans-serif (Geist)
 - ✅ Paleta de colores crema/antracita consistente
 - ✅ Animaciones sutiles y transiciones suaves
 - ✅ Modal de reseñas con overlay cálido
 - ✅ Tratamiento visual unificado con mix-blend-multiply
+- ✅ Middleware de protección de rutas administrativas
+- ✅ Políticas RLS en Supabase para seguridad a nivel de fila
 
 **Stack tecnológico:**
 - Next.js 16.2.10 (App Router + Turbopack)
 - TypeScript (tipado estricto)
 - Tailwind CSS v4
 - Lucide React (iconos)
+- Supabase (PostgreSQL + Storage + Auth)
+- @supabase/ssr (gestión de sesiones)
 - Vercel (plataforma de deploy recomendada)
 
 **Estructura de archivos:**
 ```
 src/
 ├── app/
+│   ├── admin/
+│   │   ├── page.tsx (Server Component - carga inicial)
+│   │   ├── AdminDashboard.tsx (Client Component - CRUD)
+│   │   └── login/page.tsx (Pantalla de autenticación)
 │   ├── catalogo/
 │   │   ├── page.tsx (Server Component)
-│   │   └── CatalogGrid.tsx (Client Component)
+│   │   └── CatalogGrid.tsx (Client Component con filtros)
 │   ├── layout.tsx
 │   ├── page.tsx
 │   └── globals.css
@@ -169,18 +272,27 @@ src/
 │   ├── layout/ (Navbar, Footer)
 │   └── sections/ (Hero, MissionVision, ProductGrid, Values, Reviews)
 ├── constants/
-│   └── data.ts (BRAND_INFO, BRAND_VALUES, etc.)
-├── data/
-│   └── products.ts (15 productos reales)
-└── types/
-    ├── index.ts (Review)
-    └── product.ts (Product, ProductCategory, ProductImage)
+│   └── data.ts (BRAND_INFO, BRAND_VALUES, CUSTOMER_REVIEWS)
+├── lib/
+│   ├── supabase.ts (Cliente Supabase)
+│   └── supabase-products.ts (Funciones CRUD)
+├── types/
+│   ├── index.ts (Review)
+│   └── product.ts (Product, ProductCategory, ProductGender, ProductImage)
+└── middleware.ts (Protección de rutas /admin)
+```
+
+**Variables de entorno requeridas (.env.local):**
+```
+NEXT_PUBLIC_SUPABASE_URL=https://nlsehgaihqdyixbfluur.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<tu_anon_key_aqui>
 ```
 
 **Próximamente:**
-- Línea femenina "Colección Ella" (44 productos adicionales)
 - Integración con pasarela de pagos
-- Panel administrativo para gestión de productos
+- Panel administrativo avanzado con estadísticas
+- Sistema de pedidos y seguimiento
+- Notificaciones por email para nuevos pedidos
 
 ---
 

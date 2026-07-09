@@ -7,10 +7,13 @@ export interface ProductImage {
 
 export type ProductCategory = "manilla" | "cadena" | "set" | "collar" | "anillo" | "aretes";
 
+export type ProductGender = "hombre" | "mujer" | "unisex";
+
 export interface Product {
   id: string;
   name: string;
   category: ProductCategory;
+  gender: ProductGender;
   material: string[];
   description: string;
   price: number;

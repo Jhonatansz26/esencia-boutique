@@ -37,13 +37,13 @@ export default function CatalogGrid({ initialProducts }: CatalogGridProps) {
   );
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
-  // Filtrado cruzado: primero por colección (prefijo del ID), luego por categoría
+  // Filtrado cruzado: primero por colección (género), luego por categoría
   const filteredProducts = initialProducts.filter((product) => {
-    // Filtro de colección por prefijo del ID
+    // Filtro de colección por campo gender
     const collectionMatch =
       activeCollection === "all" ||
-      (activeCollection === "him" && product.id.startsWith("EBH")) ||
-      (activeCollection === "her" && product.id.startsWith("EBM"));
+      (activeCollection === "him" && product.gender === "hombre") ||
+      (activeCollection === "her" && product.gender === "mujer");
 
     // Filtro de categoría
     const categoryMatch =

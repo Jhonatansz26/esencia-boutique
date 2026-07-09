@@ -57,6 +57,7 @@ export async function updateProduct(
     description?: string;
     featured?: boolean;
     category?: string;
+    gender?: string;
     material?: string[];
   }
 ): Promise<Product | null> {
@@ -75,11 +76,76 @@ export async function updateProduct(
   return mapRowToProduct(data);
 }
 
-function mapRowToProduct(row: Record<string, unknown>): Product {
+export async function createProduct(product: Omit<Product, "id"> & { id: string }): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from("products")
+    .insert({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      gender: product.gender,
+      material: product.material,
+      description: product.description,
+      price: product.price,
+      images: product.images,
+      featured: product.featured,
+      whatsapp_message: product.whatsappMessage,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating product:", error);
+    return null;
+  }
+
+  return mapRowToProduct(data);
+}
+
+export async function deleteProduct(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("products")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error deleting product:", error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function uploadProductImage(file: File, productId: string): Promise<string | null> {
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${productId}/${Date.now()}.${fileExt}`;
+  const filePath = fileName;
+
+  const { error: uploadError } = await supabase.storage
+    .from("product-images")
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error("Error uploading image:", uploadError);
+    return null;
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from("product-images")
+    .getPublicUrl(filePath);
+
+  return publicUrl;
+}
+
+export function mapRowToProduct(row: Record<string, unknown>): Product {
   return {
     id: row.id as string,
     name: row.name as string,
     category: row.category as Product["category"],
+    gender: (row.gender as Product["gender"]) || "mujer",
     material: row.material as string[],
     description: row.description as string,
     price: Number(row.price),

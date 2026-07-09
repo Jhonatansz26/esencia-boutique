@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     "Explora toda la colección de joyería minimalista de Esencia Boutique. Manillas, cadenas y sets elaborados con materiales premium.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function CatalogoPage() {
   const products = await getAllProducts();

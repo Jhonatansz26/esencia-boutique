@@ -3,6 +3,10 @@
 @theme inline {
   --font-family-serif: var(--font-serif);
   --radius-button: 0.125rem;
+  --color-ink: #1A1A1A;
+  --color-cream: #FDFBF7;
+  --color-cream-soft: #FAF7F2;
+  --color-gold: #D4AF37;
 }
 
 body {

@@ -5,7 +5,7 @@ export default function Footer() {
     { label: "Inicio", href: "/" },
     { label: "Catálogo", href: "/catalogo" },
     { label: "Materiales", href: "/#materiales" },
-    { label: "Instagram", href: "https://instagram.com" },
+    { label: "Instagram", href: "https://www.instagram.com/accesoriosesenciaboutique?igsh=ZG1hc3JxeXQzbmhl" },
   ];
 
   return (
