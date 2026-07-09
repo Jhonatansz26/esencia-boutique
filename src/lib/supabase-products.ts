@@ -77,6 +77,15 @@ export async function updateProduct(
 }
 
 export async function createProduct(product: Omit<Product, "id"> & { id: string }): Promise<Product | null> {
+  console.log("Creating product with data:", {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    images: product.images,
+    category: product.category,
+    gender: product.gender
+  });
+
   const { data, error } = await supabase
     .from("products")
     .insert({
@@ -99,6 +108,7 @@ export async function createProduct(product: Omit<Product, "id"> & { id: string 
     return null;
   }
 
+  console.log("Product created successfully:", data);
   return mapRowToProduct(data);
 }
 
@@ -117,31 +127,42 @@ export async function deleteProduct(id: string): Promise<boolean> {
 }
 
 export async function uploadProductImage(file: File, productId: string): Promise<string | null> {
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${productId}/${Date.now()}.${fileExt}`;
-  const filePath = fileName;
+  try {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${productId}/${Date.now()}.${fileExt}`;
+    const filePath = fileName;
 
-  const { error: uploadError } = await supabase.storage
-    .from("product-images")
-    .upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
+    const { error: uploadError } = await supabase.storage
+      .from("product-images")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
 
-  if (uploadError) {
-    console.error("Error uploading image:", uploadError);
+    if (uploadError) {
+      console.error("Error uploading image:", uploadError);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("product-images")
+      .getPublicUrl(filePath);
+
+    if (!urlData || !urlData.publicUrl) {
+      console.error("Error getting public URL: URL data is null or undefined");
+      return null;
+    }
+
+    console.log("Image uploaded successfully. Public URL:", urlData.publicUrl);
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error("Unexpected error uploading image:", error);
     return null;
   }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from("product-images")
-    .getPublicUrl(filePath);
-
-  return publicUrl;
 }
 
 export function mapRowToProduct(row: Record<string, unknown>): Product {
-  return {
+  const product = {
     id: row.id as string,
     name: row.name as string,
     category: row.category as Product["category"],
@@ -153,4 +174,14 @@ export function mapRowToProduct(row: Record<string, unknown>): Product {
     featured: row.featured as boolean,
     whatsappMessage: row.whatsapp_message as string,
   };
+
+  console.log("Mapped product:", {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    imagesLength: product.images?.length,
+    firstImageSrc: product.images?.[0]?.src
+  });
+
+  return product;
 }

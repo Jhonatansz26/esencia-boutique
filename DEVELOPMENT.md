@@ -205,8 +205,51 @@
 - **Integridad de Datos Garantizada:**
   - TypeScript: tipos estrictos en todo el código (`ProductGender`, `ProductCategory`, `ProductImage`).
   - PostgreSQL: columna `gender` con constraint NOT NULL y valores válidos.
-  - Supabase Storage: políticas RLS para prevenir uploads no autorizados.
+   - Supabase Storage: políticas RLS para prevenir uploads no autorizados.
    - Middleware: protección de rutas administrativas sin afectar rutas públicas.
+
+### [Julio 2026: Sistema de Búsqueda y Filtrado en Panel Admin]
+
+#### **Optimización de Navegación Interna**
+- **Estados de Filtrado y Búsqueda:**
+  - `adminSearchQuery`: Búsqueda en tiempo real por nombre o ID de producto.
+  - `adminCategoryFilter`: Filtrado por categoría con opción "Todas las categorías" (valor "all").
+  - Array `filteredProducts` calculado dinámicamente combinando ambos criterios.
+
+- **Barra de Controles de Búsqueda:**
+  - Input de búsqueda con icono SVG de lupa y placeholder "🔍 Buscar producto por nombre o ID...".
+  - Select dinámico que carga categorías desde Supabase (tabla `categories`).
+  - Contador de resultados: "Mostrando X de Y productos" cuando hay filtros activos.
+  - Diseño responsive: columna única en móvil, fila horizontal en desktop.
+
+- **Lógica de Filtrado en Tiempo Real:**
+  - Búsqueda case-insensitive usando `.toLowerCase()` en nombre e ID.
+  - Filtrado por categoría con operador OR cuando `adminCategoryFilter === "all"`.
+  - Mensaje de estado vacío: "No se encontraron productos que coincidan con los filtros."
+  - Renderizado condicional de tabla vs mensaje de vacío.
+
+#### **Correcciones de Bugs Críticos**
+- **Validación de Precio Obligatorio:**
+  - Validación `formData.price <= 0` antes de crear/actualizar producto.
+  - Toast de error: "El precio debe ser mayor a 0".
+  - Input mejorado con `step="1000"` y placeholder "Ej: 50000".
+  - Manejo de input vacío: `value === '' ? 0 : Math.max(0, Number(value))`.
+
+- **Validación de Subida de Imagen:**
+  - Verificación de `uploadedUrl` antes de continuar con creación de producto.
+  - Toast de error: "Error al subir la imagen" si falla el upload.
+  - Cancelación de operación si la imagen no se sube correctamente.
+
+- **Manejo Robusto de URLs Públicas:**
+  - Función `uploadProductImage()` con try-catch para capturar errores inesperados.
+  - Validación explícita de `urlData.publicUrl` antes de retornar.
+  - Logs de depuración para rastrear flujo de subida y mapeo de productos.
+
+#### **Logs de Depuración Implementados**
+- **`createProduct()`:** Log de datos antes de insertar (id, name, price, images, category, gender).
+- **`mapRowToProduct()`:** Log de cada producto mapeado con imágenes (id, name, price, imagesLength, firstImageSrc).
+- **`uploadProductImage()`:** Log de URL pública obtenida tras subida exitosa.
+- **Propósito:** Diagnosticar problemas de imágenes rotas y precios incorrectos en catálogo público.
 
 ### [Julio 2026: Refactorización Avanzada y Optimización UX/UI]
 

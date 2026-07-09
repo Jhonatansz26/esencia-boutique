@@ -23,6 +23,7 @@ interface AdminDashboardProps {
 interface Category {
   slug: string;
   name: string;
+  productCount: number;
 }
 
 export default function AdminDashboard({ initialProducts }: AdminDashboardProps) {
@@ -46,12 +47,19 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [isCategoryDeleteModalOpen, setIsCategoryDeleteModalOpen] = useState(false);
+  const [categoryToDeleteData, setCategoryToDeleteData] = useState<Category | null>(null);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   
   // Estados para configuración del sitio
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [instagramLink, setInstagramLink] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
+  
+  // Estados para búsqueda y filtrado
+  const [adminSearchQuery, setAdminSearchQuery] = useState("");
+  const [adminCategoryFilter, setAdminCategoryFilter] = useState("all");
   
   const [formData, setFormData] = useState({
     name: "",
@@ -89,17 +97,45 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     return `EBH-${timestamp}-${random}`;
   };
 
+  // Filtrar productos según búsqueda y categoría
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+                         product.id.toLowerCase().includes(adminSearchQuery.toLowerCase());
+    const matchesCategory = adminCategoryFilter === "all" || product.category === adminCategoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
   async function loadCategories() {
-    const { data, error } = await supabase
+    const { data: categoriesData, error: catError } = await supabase
       .from("categories")
-      .select("*")
+      .select("slug, name")
       .order("name");
 
-    if (error) {
-      console.error("Error loading categories:", error);
-    } else if (data) {
-      setCategories(data);
+    if (catError) {
+      console.error("Error loading categories:", catError);
+      return;
     }
+
+    if (!categoriesData) return;
+
+    const { data: productsData } = await supabase
+      .from("products")
+      .select("category");
+
+    const countMap: Record<string, number> = {};
+    if (productsData) {
+      productsData.forEach((p: { category: string }) => {
+        countMap[p.category] = (countMap[p.category] || 0) + 1;
+      });
+    }
+
+    const enriched: Category[] = categoriesData.map((c: { slug: string; name: string }) => ({
+      slug: c.slug,
+      name: c.name,
+      productCount: countMap[c.slug] || 0,
+    }));
+
+    setCategories(enriched);
   }
 
   async function loadProducts() {
@@ -188,6 +224,33 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     }
   };
 
+  const handleDeleteCategory = (category: Category) => {
+    setCategoryToDeleteData(category);
+    setIsCategoryDeleteModalOpen(true);
+  };
+
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDeleteData) return;
+
+    try {
+      const { error } = await supabase
+        .from("categories")
+        .delete()
+        .eq("slug", categoryToDeleteData.slug);
+
+      if (error) throw error;
+
+      await loadCategories();
+      await loadProducts();
+      showToast("Categoría eliminada exitosamente", "success");
+    } catch {
+      showToast("No se puede eliminar una categoría que contiene productos", "error");
+    } finally {
+      setIsCategoryDeleteModalOpen(false);
+      setCategoryToDeleteData(null);
+    }
+  };
+
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setIsCreating(false);
@@ -241,6 +304,12 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
         return;
       }
 
+      if (formData.price <= 0) {
+        showToast("El precio debe ser mayor a 0", 'error');
+        setSaving(false);
+        return;
+      }
+
       const productId = generateProductId();
       let imageUrl = "";
       
@@ -248,6 +317,10 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
         const uploadedUrl = await uploadProductImage(selectedFile, productId);
         if (uploadedUrl) {
           imageUrl = uploadedUrl;
+        } else {
+          showToast("Error al subir la imagen", 'error');
+          setSaving(false);
+          return;
         }
       }
 
@@ -281,12 +354,22 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
         return;
       }
 
+      if (formData.price <= 0) {
+        showToast("El precio debe ser mayor a 0", 'error');
+        setSaving(false);
+        return;
+      }
+
       let newImages = editingProduct.images;
 
       if (selectedFile) {
         const uploadedUrl = await uploadProductImage(selectedFile, editingProduct.id);
         if (uploadedUrl) {
           newImages = [{ src: uploadedUrl, alt: formData.name, width: 800, height: 800 }];
+        } else {
+          showToast("Error al subir la imagen", 'error');
+          setSaving(false);
+          return;
         }
       }
 
@@ -410,40 +493,58 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
             <Plus size={18} className="inline mr-2" />
             Nuevo Producto
           </Button>
+          <Button variant="outline" onClick={() => setIsCategoryModalOpen(true)}>
+            <span className="inline mr-1.5">🏷️</span>
+            Categorías
+          </Button>
           <Button variant="outline" onClick={() => setIsSettingsModalOpen(true)}>
             <Settings size={18} className="inline mr-2" />
             Configurar Contacto
           </Button>
         </div>
 
-        {/* Sección de Gestión de Categorías */}
-        <div className="mb-8 p-6 bg-white rounded-lg shadow-sm border border-gray-100">
-          <h3 className="text-lg font-medium text-[#1A1A1A] mb-4">Gestionar Categorías</h3>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              placeholder="Nombre de nueva categoría (ej: Gafas)"
-              className="flex-1 px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 text-sm"
-            />
-            <Button variant="outline" onClick={handleAddCategory}>
-              <Plus size={16} className="inline mr-1" />
-              Agregar
-            </Button>
-          </div>
-          {categories.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <span
-                  key={cat.slug}
-                  className="inline-flex items-center px-3 py-1 rounded-sm text-xs bg-[#FAF7F2] text-[#1A1A1A] border border-gray-200"
-                >
-                  {cat.name}
-                </span>
-              ))}
+        {/* Barra de Búsqueda y Filtros */}
+        <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={adminSearchQuery}
+                onChange={(e) => setAdminSearchQuery(e.target.value)}
+                placeholder="🔍 Buscar producto por nombre o ID..."
+                className="w-full px-4 py-2 pl-10 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 text-sm"
+              />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
             </div>
-          )}
+            <select
+              value={adminCategoryFilter}
+              onChange={(e) => setAdminCategoryFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 text-sm bg-white"
+            >
+              <option value="all">Todas las categorías</option>
+              {categories.map((cat) => (
+                <option key={cat.slug} value={cat.slug}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {adminSearchQuery || adminCategoryFilter !== "all" ? (
+            <p className="text-xs text-gray-500 mt-2">
+              Mostrando {filteredProducts.length} de {products.length} productos
+            </p>
+          ) : null}
         </div>
 
         {/* Tabla de Productos */}
@@ -462,7 +563,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-[#FAF7F2] transition-colors">
                     <td className="px-8 py-6">
                       <div className="relative w-16 h-16 overflow-hidden rounded">
@@ -511,6 +612,15 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                 ))}
               </tbody>
             </table>
+            {filteredProducts.length === 0 && (
+              <div className="p-12 text-center">
+                <p className="text-gray-500 text-sm">
+                  {adminSearchQuery || adminCategoryFilter !== "all"
+                    ? "No se encontraron productos que coincidan con los filtros."
+                    : "No hay productos registrados."}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -553,14 +663,24 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-2">Precio (COP)</label>
+                <label className="block text-sm text-gray-600 mb-2">Precio (COP) *</label>
                 <input
                   type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                  value={formData.price || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({ 
+                      ...formData, 
+                      price: value === '' ? 0 : Math.max(0, Number(value))
+                    });
+                  }}
                   className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20"
                   min="0"
+                  step="1000"
+                  placeholder="Ej: 50000"
+                  required
                 />
+                <p className="text-xs text-gray-500 mt-1">Ingresa el precio en pesos colombianos</p>
               </div>
 
               <div>
@@ -719,6 +839,141 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                 onClick={() => {
                   setIsDeleteModalOpen(false);
                   setProductToDelete(null);
+                }}
+                className="border-stone-300 text-stone-700 hover:bg-stone-100 hover:text-stone-900 transition-colors duration-300"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Gestión de Categorías */}
+      {isCategoryModalOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-4 backdrop-blur-md"
+          style={{ backgroundColor: "rgba(28, 20, 14, 0.55)" }}
+        >
+          <div className="bg-[#FAF7F2] rounded-lg shadow-xl max-w-xl w-full p-6 relative max-h-[85vh] overflow-y-auto">
+            <button
+              onClick={() => setIsCategoryModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Cerrar"
+            >
+              <X size={24} />
+            </button>
+
+            <h2 className="font-serif text-2xl text-[#1A1A1A] mb-5 tracking-wide">
+              Gestionar Categorías
+            </h2>
+
+            {/* Bloque de creación */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
+                placeholder="Nombre de nueva categoría (ej: Gafas)"
+                className="flex-1 px-4 py-2.5 bg-white border border-stone-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/10 focus:border-stone-300 text-sm transition-all"
+              />
+              <Button variant="outline" onClick={handleAddCategory}>
+                <Plus size={16} className="inline mr-1" />
+                Agregar
+              </Button>
+            </div>
+
+            {/* Separador */}
+            {categories.length > 0 && (
+              <div className="border-b border-stone-200 my-5" />
+            )}
+
+            {/* Listado de categorías */}
+            <div>
+              {categories.length > 0 ? (
+                <div className="bg-white/50 border border-stone-200/60 rounded-xl p-4">
+                  {categories.map((cat) => (
+                    <div
+                      key={cat.slug}
+                      className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-white/80 transition-colors duration-200"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-stone-800 tracking-wide">
+                          {cat.name}
+                        </span>
+                        <span className="inline-block bg-stone-200/60 text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full">
+                          {cat.productCount === 1
+                            ? "1 producto"
+                            : `${cat.productCount} productos`}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteCategory(cat)}
+                        className="flex items-center justify-center w-8 h-8 rounded-full text-stone-300 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
+                        title="Eliminar categoría"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-stone-400 text-sm py-6">
+                  No hay categorías registradas. Agrega la primera arriba.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Eliminación de Categoría */}
+      {isCategoryDeleteModalOpen && categoryToDeleteData && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-4 backdrop-blur-md"
+          style={{ backgroundColor: "rgba(28, 20, 14, 0.55)" }}
+        >
+          <div className="bg-[#FAF7F2] rounded-lg shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => {
+                setIsCategoryDeleteModalOpen(false);
+                setCategoryToDeleteData(null);
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Cerrar"
+            >
+              <X size={24} />
+            </button>
+
+            <h2 className="font-serif text-2xl text-[#1A1A1A] mb-4 tracking-wide">
+              Eliminar Categoría
+            </h2>
+
+            <p className="text-gray-600 mb-2">
+              ¿Estás seguro de que deseas eliminar la categoría{" "}
+              <span className="font-semibold text-[#1A1A1A]">"{categoryToDeleteData.name}"</span>?
+            </p>
+            <p className="text-sm text-stone-500 mb-6">
+              {categoryToDeleteData.productCount > 0
+                ? `Esta categoría tiene ${categoryToDeleteData.productCount} ${categoryToDeleteData.productCount === 1 ? "producto asociado" : "productos asociados"}. Los productos quedarán sin categoría asignada.`
+                : "Esta categoría no tiene productos asociados."}
+            </p>
+
+            <div className="flex gap-3">
+              <Button
+                variant="primary"
+                onClick={confirmDeleteCategory}
+                className="flex-1 bg-stone-900 hover:bg-red-800 text-white transition-colors duration-300"
+              >
+                <Trash2 size={18} className="inline mr-2" />
+                Eliminar
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsCategoryDeleteModalOpen(false);
+                  setCategoryToDeleteData(null);
                 }}
                 className="border-stone-300 text-stone-700 hover:bg-stone-100 hover:text-stone-900 transition-colors duration-300"
               >
