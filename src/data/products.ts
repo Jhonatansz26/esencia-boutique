@@ -165,6 +165,138 @@ export const products: Product[] = [
     images: [{ src: "/images/legacy-multiple-color.jpg", alt: "Legacy Múltiple Color", width: 800, height: 800 }],
     featured: false,
     whatsappMessage: "Hola! Estoy interesado en la referencia EBH-015: Legacy Múltiple Color."
+  },
+  {
+    id: "EBM-001",
+    name: "Nueva Joya Ella (Editar)",
+    category: "collar",
+    material: ["por definir"],
+    description: "Espacio disponible para descripción.",
+    price: 0,
+    images: [{ src: "/images/EBM-001.jpeg", alt: "EBM-001", width: 800, height: 800 }],
+    featured: false,
+    whatsappMessage: "Hola! Estoy interesado en la referencia EBM-001."
+  },
+  {
+    id: "EBM-002",
+    name: "Nueva Joya Ella (Editar)",
+    category: "collar",
+    material: ["por definir"],
+    description: "Espacio disponible para descripción.",
+    price: 0,
+    images: [{ src: "/images/EBM-002.jpeg", alt: "EBM-002", width: 800, height: 800 }],
+    featured: false,
+    whatsappMessage: "Hola! Estoy interesado en la referencia EBM-002."
+  },
+  {
+    id: "EBM-003",
+    name: "Nueva Joya Ella (Editar)",
+    category: "collar",
+    material: ["por definir"],
+    description: "Espacio disponible para descripción.",
+    price: 0,
+    images: [{ src: "/images/EBM-003.jpeg", alt: "EBM-003", width: 800, height: 800 }],
+    featured: false,
+    whatsappMessage: "Hola! Estoy interesado en la referencia EBM-003."
+  },
+  {
+    id: "EBM-004",
+    name: "Nueva Joya Ella (Editar)",
+    category: "collar",
+    material: ["por definir"],
+    description: "Espacio disponible para descripción.",
+    price: 0,
+    images: [{ src: "/images/EBM-004.jpeg", alt: "EBM-004", width: 800, height: 800 }],
+    featured: false,
+    whatsappMessage: "Hola! Estoy interesado en la referencia EBM-004."
+  },
+  {
+    id: "EBM-005",
+    name: "Nueva Joya Ella (Editar)",
+    category: "collar",
+    material: ["por definir"],
+    description: "Espacio disponible para descripción.",
+    price: 0,
+    images: [{ src: "/images/EBM-005.jpeg", alt: "EBM-005", width: 800, height: 800 }],
+    featured: false,
+    whatsappMessage: "Hola! Estoy interesado en la referencia EBM-005."
+  },
+  {
+    id: "EBM-006",
+    name: "Nueva Joya Ella (Editar)",
+    category: "collar",
+    material: ["por definir"],
+    description: "Espacio disponible para descripción.",
+    price: 0,
+    images: [{ src: "/images/EBM-006.jpeg", alt: "EBM-006", width: 800, height: 800 }],
+    featured: false,
+    whatsappMessage: "Hola! Estoy interesado en la referencia EBM-006."
+  },
+  {
+    id: "EBM-007",
+    name: "Nueva Joya Ella (Editar)",
+    category: "collar",
+    material: ["por definir"],
+    description: "Espacio disponible para descripción.",
+    price: 0,
+    images: [{ src: "/images/EBM-007.jpeg", alt: "EBM-007", width: 800, height: 800 }],
+    featured: false,
+    whatsappMessage: "Hola! Estoy interesado en la referencia EBM-007."
+  },
+  {
+    id: "EBM-008",
+    name: "Nueva Joya Ella (Editar)",
+    category: "collar",
+    material: ["por definir"],
+    description: "Espacio disponible para descripción.",
+    price: 0,
+    images: [{ src: "/images/EBM-008.jpeg", alt: "EBM-008", width: 800, height: 800 }],
+    featured: false,
+    whatsappMessage: "Hola! Estoy interesado en la referencia EBM-008."
+  },
+  {
+    id: "EBM-009",
+    name: "Nueva Joya Ella (Editar)",
+    category: "collar",
+    material: ["por definir"],
+    description: "Espacio disponible para descripción.",
+    price: 0,
+    images: [{ src: "/images/EBM-009.jpeg", alt: "EBM-009", width: 800, height: 800 }],
+    featured: false,
+    whatsappMessage: "Hola! Estoy interesado en la referencia EBM-009."
+  },
+  {
+    id: "EBM-010",
+    name: "Nueva Joya Ella (Editar)",
+    category: "collar",
+    material: ["por definir"],
+    description: "Espacio disponible para descripción.",
+    price: 0,
+    images: [{ src: "/images/EBM-010.jpeg", alt: "EBM-010", width: 800, height: 800 }],
+    featured: false,
+    whatsappMessage: "Hola! Estoy interesado en la referencia EBM-010."
+  },
+  {
+    id: "EBM-011",
+    name: "Nueva Joya Ella (Editar)",
+    category: "collar",
+    material: ["por definir"],
+    description: "Espacio disponible para descripción.",
+    price: 0,
+    images: [{ src: "/images/EBM-011.jpeg", alt: "EBM-011", width: 800, height: 800 }],
+    featured: false,
+    whatsappMessage: "Hola! Estoy interesado en la referencia EBM-011."
+  },
+  {
+    id: "EBM-012",
+    name: "Nueva Joya Ella (Editar)",
+    category: "collar",
+    material: ["por definir"],
+    description: "Espacio disponible para descripción.",
+    price: 0,
+    images: [{ src: "/images/EBM-012.jpeg", alt: "EBM-012", width: 800, height: 800 }],
+    featured: false,
+    whatsappMessage: "Hola! Estoy interesado en la referencia EBM-012."
   }
 ];
 

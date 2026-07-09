@@ -17,6 +17,9 @@ const CATEGORY_LABELS: Record<ProductCategory | "all", string> = {
   manilla: "Manillas",
   cadena: "Cadenas",
   set: "Sets",
+  collar: "Collares",
+  anillo: "Anillos",
+  aretes: "Aretes",
 };
 
 export default function CatalogGrid({ initialProducts }: CatalogGridProps) {
@@ -61,12 +64,6 @@ export default function CatalogGrid({ initialProducts }: CatalogGridProps) {
             </button>
           )
         )}
-        <button
-          disabled
-          className="px-5 py-2 text-sm tracking-wide rounded-sm border border-dashed border-[#1A1A1A]/30 text-[#1A1A1A]/40 cursor-not-allowed"
-        >
-          Colección Ella (Próximamente)
-        </button>
       </div>
 
       {/* Grid de productos */}

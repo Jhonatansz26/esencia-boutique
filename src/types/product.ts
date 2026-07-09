@@ -5,7 +5,7 @@ export interface ProductImage {
   height: number;
 }
 
-export type ProductCategory = "manilla" | "cadena" | "set";
+export type ProductCategory = "manilla" | "cadena" | "set" | "collar" | "anillo" | "aretes";
 
 export interface Product {
   id: string;
