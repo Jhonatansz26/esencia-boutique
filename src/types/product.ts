@@ -5,7 +5,7 @@ export interface ProductImage {
   height: number;
 }
 
-export type ProductCategory = "manilla" | "cadena" | "set" | "collar" | "anillo" | "aretes";
+export type ProductCategory = "manilla" | "cadena" | "set" | "collar" | "anillo" | "aretes" | "gorras";
 
 export type ProductGender = "hombre" | "mujer" | "unisex";
 

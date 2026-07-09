@@ -384,6 +384,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                   <option value="collar">Collar</option>
                   <option value="anillo">Anillo</option>
                   <option value="aretes">Aretes</option>
+                  <option value="gorras">Gorras</option>
                 </select>
               </div>
 

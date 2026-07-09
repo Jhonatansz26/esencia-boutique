@@ -28,6 +28,7 @@ const CATEGORY_LABELS: Record<ProductCategory | "all", string> = {
   collar: "Collares",
   anillo: "Anillos",
   aretes: "Aretes",
+  gorras: "Gorras",
 };
 
 export default function CatalogGrid({ initialProducts }: CatalogGridProps) {
@@ -112,7 +113,7 @@ export default function CatalogGrid({ initialProducts }: CatalogGridProps) {
                     : "bg-transparent border border-[#1A1A1A]/20 text-[#1A1A1A] hover:border-[#1A1A1A]"
                 }`}
               >
-                {CATEGORY_LABELS[category]}
+                {CATEGORY_LABELS[category] ?? category}
               </button>
             )
           )}
@@ -160,8 +161,8 @@ function ProductCard({ product, isPriority }: ProductCardProps) {
       {/* Imagen con aspect-square para evitar CLS */}
       <div className="relative w-full aspect-square overflow-hidden bg-gray-50">
         <Image
-          src={product.images[0].src}
-          alt={product.images[0].alt}
+          src={product.images?.[0]?.src || '/images/placeholder.png'}
+          alt={product.images?.[0]?.alt || product.name}
           fill
           className="object-cover filter contrast-[0.98] brightness-[1.01] group-hover:scale-105 transition-transform duration-500"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
