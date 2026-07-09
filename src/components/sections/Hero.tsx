@@ -30,7 +30,7 @@ export default function Hero() {
 
       <div className="relative w-full h-[500px] max-h-[500px] overflow-hidden">
         <Image
-          src="/images/hero-principal.png"
+          src="/images/cadena-faith-gold.png"
           alt="Joyería minimalista elegante"
           fill
           className="object-contain"
