@@ -7,9 +7,9 @@ const materials = [
     image: "/images/cadena-urban.png",
   },
   {
-    name: "Oro Laminado",
-    description: "La calidez del oro, la fuerza de lo auténtico.",
-    image: "/images/cadena-faith-gold.png",
+    name: "Colección Leopardo",
+    description: "La fuerza del metal y la audacia del diseño salvaje en una sola pieza.",
+    image: "/images/leopardo-premium.png",
   },
   {
     name: "Piedras Naturales",

@@ -11,13 +11,22 @@
 | :--- | :--- | :--- | :--- |
 | Configuración de Carpetas | `src/` | ✅ Completado | Estructura base del proyecto |
 | Tipos y Datos Estáticos | `src/types`, `src/constants` | ✅ Completado | Modelos e información de la marca |
-| Componentes Atómicos (Botón/Título) | `src/components/common` | ✅ Completado | Botones tipo píldora y títulos Serif |
-| Navbar & Footer | `src/components/layout` | ✅ Completado | Estructura de navegación global |
+| Componentes Atómicos (Botón/Título) | `src/components/common` | ✅ Completado | Botones (primary/outline/invert) y títulos Serif con número fantasma |
+| Navbar & Footer | `src/components/layout` | ✅ Completado | Footer editorial en 2 actos (banner contacto + 3 columnas) |
 | Hero Section | `src/components/sections` | ✅ Completado | Portada con eslogan principal |
-| Misión y Visión | `src/components/sections` | ✅ Completado | Sección de identidad de marca |
-| Catálogo Destacado | `src/components/sections` | ✅ Completado | Cuadrícula con enlaces directos a WhatsApp |
-| Valores | `src/components/sections` | ✅ Completado | 4 pilares con iconos limpios |
-| Reseñas (Testimonios) | `src/components/sections` | ✅ Completado | Carrusel/Cuadrícula de opiniones de clientes |
+| Filosofía de Marca (BrandStory) | `src/components/sections/MissionVision` | ✅ Completado | Layout asimétrico editorial 60/40 con layering |
+| Sección Materiales | `src/components/sections/Materials` | ✅ Completado | 3 tarjetas uniformes con degradado y stagger editorial |
+| Catálogo Destacado (Home) | `src/components/sections/ProductGrid` | ✅ Completado | Cuadrícula con enlaces directos a WhatsApp |
+| Catálogo Completo | `src/app/catalogo/CatalogGrid` | ✅ Completado | Filtros editoriales + QuickView modal + Framer Motion |
+| Valores (Mosaico) | `src/components/sections/Values` | ✅ Completado | Mosaico asimétrico con marcas de agua y soporte imagen |
+| Reseñas (Testimonios) | `src/components/sections/Reviews` | ✅ Completado | Carrusel/Cuadrícula de opiniones de clientes |
+| Página 404 | `src/app/not-found` | ✅ Completado | Página editorial con CTAs duales |
+| PWA Manifest | `src/app/manifest` | ✅ Completado | Configuración tipada para móvil |
+| ScrollReveal | `src/components/common/ScrollReveal` | ✅ Completado | Wrapper de animaciones `whileInView` |
+| SectionDivider | `src/components/common/SectionDivider` | ✅ Completado | Separador editorial de 1px |
+| FilterBar | `src/components/catalogo/FilterBar` | ✅ Completado | Filtros editoriales con underline dorado animado |
+| ProductSkeleton | `src/components/catalogo/ProductSkeleton` | ✅ Completado | Skeleton con `animate-pulse` premium |
+| Compresión WebP | `src/lib/image-compression` | ✅ Completado | Canvas → WebP quality 0.82 en cliente |
 
 ## 📝 3. Historial de Cambios (Changelog)
 ### [Fase 1: Infraestructura Base]
@@ -436,6 +445,211 @@
 #### **Archivos Modificados:**
 - `src/app/catalogo/CatalogGrid.tsx` — Import de `X` de lucide-react, nuevos estados, ProductCard con onClick, modal Quick View completo.
 
+---
+
+## 🎨 FASE DE REDISEÑO EDITORIAL (Sesión Julio 2026)
+
+### [Fase E1: Refactorización Home — Layout Asimétrico Editorial]
+
+#### **MissionVision (BrandStory) — Layout 60/40 Asimétrico:**
+- Estructura anterior simétrica 50/50 reemplazada por grid `[3fr_2fr]`.
+- Eliminados encabezados "Misión" y "Visión".
+- Etiqueta discreta superior: "FILOSOFÍA DE MARCA" (`text-xs uppercase tracking-widest text-stone-400`).
+- Título gigante poético: `font-serif italic text-5xl md:text-7xl text-stone-900 leading-tight`.
+- Efecto layering: texto flota sobre borde de imagen con `md:-mr-16 lg:-mr-24` (posteriormente eliminado en hotfix responsive).
+- Imagen con `aspect-[3/4]`, ruta agnóstica `/images/filosofia-marca.jpeg`.
+
+#### **Nueva Sección Materials:**
+- Creación de `src/components/sections/Materials.tsx` con `id="materiales"` y `scroll-mt-24`.
+- 3 tarjetas desiguales con stagger `mt-0`, `mt-12`, `mt-6` para romper monotonía.
+- Materiales: "Acero Inoxidable", "Oro Laminado", "Piedras Naturales".
+- Imágenes de fondo con `bg-gradient-to-t from-black/70 to-transparent`.
+- Hover: `scale-105` con `duration-700 ease-out` + texto `-translate-y-1`.
+- **Hotfix aplicado:** stagger eliminado, altura fija `h-[400px]` mobile / `md:h-[500px]` desktop, `pb-8 md:pb-10` para evitar texto cortado, overlay `bg-gradient-to-t from-black/80 via-black/40 to-transparent` reforzado.
+
+#### **SectionDivider:**
+- Creación de `src/components/common/SectionDivider.tsx`.
+- Línea horizontal de 1px con `bg-[#1A1A1A]/10` dentro de contenedor `max-w-7xl`.
+
+#### **Home page.tsx reordenado:**
+- Import alias: `import BrandStory from "@/components/sections/MissionVision"`.
+- Estructura intercalada: `<Hero />`, `<SectionDivider />`, `<BrandStory />`, etc.
+
+### [Fase E2: Footer en 2 Actos + Valores Mosaico]
+
+#### **Footer reescrito en 2 actos:**
+- **Acto 1 (Banner de contacto):** `id="contacto"`, fondo `#1A1A1A`, etiqueta "Contacto" en dorado, título poético, CTA WhatsApp.
+- **Acto 2 (Footer editorial):** Fondo `#141210`, grid `md:grid-cols-[1.3fr_1fr_1fr]` con 3 columnas: Marca, Navegación, Atención.
+- Columna "Atención" con enlaces a WhatsApp, Instagram y dirección.
+- Textura de puntos sutil `radial-gradient` en ambos actos.
+
+#### **Values — Mosaico Asimétrico:**
+- Reemplazados 4 iconos vectoriales (Gem, Sparkles, Shield, Heart) por mosaico.
+- Bloque "01" grande `lg:col-span-2 lg:row-span-2`, resto `lg:col-span-2` o `lg:col-span-1`.
+- Marcas de agua numéricas gigantes (`text-9xl sm:text-[10rem]`) en `text-stone-200/40`.
+- Soporte para `bgImage` opcional con overlay y `text-stone-200/40` por defecto.
+- **Hotfix responsive:** `heightClass` estrictas (`h-[320px]`, `h-[200px]`, `lg:h-auto`), padding proporcional por breakpoint, marcas de agua escalonadas (`text-9xl sm:text-[10rem] md:text-9xl`).
+
+#### **Button — Nueva Variante `invert`:**
+- Agregada tercera variante nativa en `src/components/common/Button.tsx`.
+- `invert`: `bg-[#FDFBF7] text-[#1A1A1A] hover:bg-[#D4AF37] hover:text-[#1A1A1A]`.
+- Elimina necesidad de overrides `!bg-` en Tailwind.
+
+### [Fase E3: Catálogo — Filtros Editoriales + Quick View + Animaciones]
+
+#### **FilterBar Editorial:**
+- Creación de `src/components/catalogo/FilterBar.tsx`.
+- 2 niveles jerárquicos: Colección (tabs Serif grandes con subrayado dorado animado) y Categoría (botones pequeños con tracking amplio).
+- Subrayado animado `bg-[#D4AF37]` con `transition-all duration-300 ease-out`.
+- Contador editorial `[N]` en `font-serif italic`.
+- Carga dinámica de categorías desde Supabase via `useEffect`.
+
+#### **CatalogGrid — Layout Asimétrico (Fase 3):**
+- Reescrito completo con `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`.
+- `FEATURE_EVERY = 7`: cada 7° producto recibe `sm:col-span-2 lg:col-span-2 lg:row-span-2` para romper ritmo.
+- `motion.div` con `layoutId` para transición de imagen compartida al Quick View.
+- **Refactor de Fase 6 (catálogo simétrico):** Eliminado `FEATURE_EVERY` e `isFeatured`. Todas las tarjetas uniformes con `aspect-square`. Grilla `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4`. Etiqueta "Pieza destacada" ahora controlada por `product.featured` de la BD.
+
+#### **QuickView Modal con Framer Motion:**
+- Instalado `framer-motion` como dependencia.
+- `motion.div` con `initial/animate/exit` para fade-in/out.
+- `layoutId` compartido entre `ProductCard` y modal para transición de imagen compartida.
+- Galería de thumbnails con scroll horizontal.
+- `AnimatePresence` envolviendo el modal completo.
+
+#### **Skeleton de Carga:**
+- Creación de `src/components/catalogo/ProductSkeleton.tsx` con pulsación `animate-pulse` de 2.2s.
+- Skeleton respeta la lógica de featured (anteriormente) y luego fue simplificado a tarjetas uniformes.
+- `src/app/catalogo/loading.tsx` como fallback automático de Next.js con skeleton de filtros + grilla.
+
+#### **ScrollReveal Wrapper:**
+- Creación de `src/components/common/ScrollReveal.tsx`.
+- `motion.div` con `whileInView` + `viewport.once` + `margin: "-100px"`.
+- Duración 0.6s, ease "easeOut", delay opcional.
+- Aplicado a todas las secciones de la Home excepto Hero (evita parpadeo inicial).
+
+### [Fase E4: Páginas Institucionales + Metadatos Open Graph]
+
+#### **Sección 404 Editorial:**
+- Creación de `src/app/not-found.tsx`.
+- Tipografía gigante `font-serif text-8xl md:text-9xl text-stone-200/50`.
+- Título: "Esta pieza no se encuentra en nuestra colección".
+- CTAs duales: "Volver al Inicio" (primary) y "Ver Catálogo" (outline).
+
+#### **Login Admin Reestilizado:**
+- Reescrito `src/app/admin/login/page.tsx` con estética premium.
+- Etiqueta "Acceso privado" en `text-xs uppercase tracking-[0.25em] text-stone-400`.
+- Inputs con `border-[#1A1A1A]/15` y `focus:border-[#D4AF37]`.
+- Alerta de error refinada con `border-red-900/20 bg-red-900/5`.
+
+#### **SectionTitle con Número Fantasma:**
+- Extendido `src/components/common/SectionTitle.tsx` con prop opcional `number?: string`.
+- Renderiza `<span>` absoluto con `font-serif text-8xl md:text-9xl text-stone-200/40` y `-z-0`.
+
+#### **Metadata Open Graph Global:**
+- Reescrito `src/app/layout.tsx` con `metadataBase`, `title.template`, Open Graph completo (es_CO, og-cover.jpg 1200x630), Twitter Cards.
+- Palabras clave: "joyería minimalista", "joyería Colombia", "accesorios de autor", etc.
+
+#### **PWA Manifest:**
+- Creación de `src/app/manifest.ts` tipado con `MetadataRoute.Manifest`.
+- `name`, `short_name`, `start_url: "/"`, `display: "standalone"`, colores brand.
+- Iconos 512x512 y 180x180 (apple-icon).
+
+#### **Compresión de Imágenes WebP:**
+- Creación de `src/lib/image-compression.ts` con función asíncrona Canvas-based.
+- Convierte a WebP con `quality: 0.82` y max 1600x1600.
+- Integrada en `AdminDashboard.tsx`: estado `isCompressing`, spinner de Loader2 durante proceso, input deshabilitado.
+
+#### **Toasts Boutique Dark:**
+- Refactor del toast en `AdminDashboard.tsx`: fondo `#1A1A1A`, borde dorado `#D4AF37/40` para éxito y rojo sutil para error.
+- Indicador circular pequeño (`w-1.5 h-1.5`) en el color correspondiente.
+
+### [Fase E5: Hotfix Responsive y Refinamiento Final]
+
+#### **Corrección de Desbordamiento en MissionVision:**
+- **Problema:** Título "Cada pieza, un manifiesto..." desbordaba hacia la imagen.
+- **Solución:** Añadido `max-w-xl` al `<h2>`, padding `pr-4 md:pr-8` a la columna de texto.
+- **Ajuste final:** Grid `gap-8 md:gap-12 lg:gap-16`, eliminados márgenes negativos conflictivos.
+- Imagen cambiada a ruta agnóstica `/images/filosofia-marca.jpeg` con `object-cover object-center` y `md:items-center`.
+
+#### **Corrección de Texto Cortado en Materials:**
+- **Problema:** Descripción de "Acero Inoxidable" se cortaba en la base.
+- **Iteración 1:** Altura fija `h-[450px]` + stagger eliminado, `flex-col justify-end`.
+- **Iteración 2 (definitiva):** `h-[400px]` mobile / `md:h-[500px]` desktop, padding `pb-8 md:pb-10`, `z-10`, degradado `from-black/80 via-black/40 to-transparent` para asegurar legibilidad.
+
+#### **Contraste Condicional en Values:**
+- **Problema:** Texto oscuro sobre imagen oscura en tarjeta "01 CALIDAD".
+- **Solución:** Cuando `value.bgImage` existe, texto cambia a `text-white`/`text-stone-200`, divisor a `bg-white/40`, número a `text-white/10`, y overlay cambia a `bg-gradient-to-t from-black/80 via-black/40 to-transparent`.
+- Ruta de imagen: `/images/valores-calidad.png`.
+
+#### **Grilla Uniforme del Catálogo:**
+- **Problema:** Producto "destacado" duplicaba tamaño rompiendo simetría.
+- **Solución:** Eliminado `FEATURE_EVERY` e `isFeatured`. Todas las tarjetas usan `aspect-square` uniforme. La etiqueta "PIEZA DESTACADA" se renderiza condicionalmente por `product.featured` sin alterar tamaño.
+
+#### **Iconos WhatsApp Monocromáticos:**
+- **Problema:** Colores corporativos verde/rosa rompían paleta boutique.
+- **Iteración 1:** SVG oficial con `viewBox="0 0 24 24"`, `circle #25D366` + `path #FFF`.
+- **Iteración 2 (definitiva):** SVG monocromático con `fill="currentColor"` que se adapta al contexto.
+- **Footer:** `className="w-5 h-5 fill-current transition-colors duration-300"` — hereda `hover:text-[#D4AF37]`.
+- **WhatsAppFloating:** Contenedor circular boutique `bg-[#1A1A1A] text-[#FAF7F2] p-3 rounded-full border border-[#FAF7F2]/10 hover:bg-[#FAF7F2] hover:text-[#1A1A1A] hover:scale-105`. SVG interno `w-6 h-6 fill-current`.
+- Reemplazado `Instagram` (que no existe en lucide-react@1.23.0) por componente SVG inline con el logo oficial.
+
+#### **Revalidación de Home:**
+- `src/app/actions/revalidate.ts` extendido con `revalidatePath("/")` para que los productos destacados en la Home se actualicen al hacer cambios en el admin.
+
+#### **Scroll Behavior Smooth:**
+- `src/app/globals.css` con `html { scroll-behavior: smooth; }` para ancla perfecta del Navbar a `/#materiales`.
+
+### [Fase E6: Estructura de Archivos Actualizada]
+
+```
+src/
+├── app/
+│   ├── actions/
+│   │   └── revalidate.ts (Server Action - revalidación / y /catalogo)
+│   ├── admin/
+│   │   ├── page.tsx
+│   │   ├── AdminDashboard.tsx (compresión WebP, toasts boutique)
+│   │   └── login/page.tsx (estética premium con focus dorado)
+│   ├── catalogo/
+│   │   ├── page.tsx
+│   │   ├── CatalogGrid.tsx (grilla simétrica + Framer Motion + QuickView)
+│   │   └── loading.tsx (ProductSkeleton fallback)
+│   ├── layout.tsx (metadatos OpenGraph + Twitter Cards)
+│   ├── page.tsx (Home con ScrollReveal + SectionDivider)
+│   ├── not-found.tsx (página 404 editorial)
+│   ├── manifest.ts (PWA manifest tipado)
+│   └── globals.css (scroll-behavior smooth)
+├── components/
+│   ├── catalogo/
+│   │   ├── FilterBar.tsx (filtros editoriales con underline animado)
+│   │   └── ProductSkeleton.tsx (skeleton con animate-pulse 2.2s)
+│   ├── common/
+│   │   ├── Button.tsx (variantes: primary, outline, invert)
+│   │   ├── ScrollReveal.tsx (wrapper de Framer Motion)
+│   │   ├── SectionDivider.tsx (línea 1px separadora)
+│   │   ├── SectionTitle.tsx (con número fantasma opcional)
+│   │   └── WhatsAppFloating.tsx (botón boutique monocromático)
+│   ├── layout/
+│   │   ├── Footer.tsx (2 actos: banner contacto + footer editorial)
+│   │   └── Navbar.tsx
+│   └── sections/
+│       ├── Hero.tsx
+│       ├── MissionVision.tsx (layout asimétrico 60/40 con layering)
+│       ├── Materials.tsx (3 tarjetas uniformes con stagger)
+│       ├── ProductGrid.tsx (3 destacados conectados a Supabase)
+│       ├── Values.tsx (mosaico asimétrico con texto condicional)
+│       └── Reviews.tsx
+├── lib/
+│   ├── image-compression.ts (Canvas → WebP quality 0.82)
+│   ├── supabase.ts
+│   └── supabase-products.ts
+├── types/
+│   ├── index.ts (Review)
+│   └── product.ts (Product, ProductCategory, ProductGender)
+└── middleware.ts
+```
+
 ## 🚀 4. Estado de Producción
 
 ### ✅ Proyecto Listo para Deploy
@@ -454,30 +668,46 @@
 - ✅ Base de datos PostgreSQL en Supabase con 27 productos (15 masculinos + 12 femeninos)
 - ✅ Sistema de autenticación con sesiones seguras (@supabase/ssr)
 - ✅ Panel de administración completo con operaciones CRUD
-- ✅ Carga de imágenes en tiempo real a Supabase Storage
+- ✅ Carga de imágenes en tiempo real a Supabase Storage con **compresión WebP automática** (Canvas API, quality 0.82, max 1600x1600)
 - ✅ Filtro cruzado doble: Colección (Hombre/Mujer) + Categoría (Manillas/Cadenas/Sets/etc.)
 - ✅ Columna `gender` formal para filtrado robusto (reemplaza lógica frágil de prefijos)
-- ✅ Invalidación de caché ISR con Server Actions (`revalidatePath`) tras operaciones CRUD
+- ✅ Invalidación de caché ISR con Server Actions (`revalidatePath`) tras operaciones CRUD — incluye `/` y `/catalogo`
 - ✅ 3 productos destacados en la Home
 - ✅ Sistema de reseñas interactivo con localStorage
-- ✅ Botón flotante de WhatsApp (número: 57 320 677 1346)
+- ✅ Botón flotante de WhatsApp boutique monocromático (número: 57 320 677 1346)
 - ✅ Paginación "Ver más" con 12 productos por página
-- ✅ Diseño responsive mobile-first
+- ✅ **Filtros editoriales con FilterBar** (tabs Serif + underline dorado animado + categorías dinámicas)
+- ✅ **Quick View modal con Framer Motion** (transición de imagen compartida via `layoutId`)
+- ✅ **ProductSkeleton** con `animate-pulse` 2.2s + `loading.tsx` automático de Next.js
+- ✅ **ScrollReveal** wrapper con `whileInView` para animaciones de entrada
+- ✅ **Metadatos Open Graph + Twitter Cards** para previsualizaciones premium en redes sociales
+- ✅ **PWA Manifest** tipado (`MetadataRoute.Manifest`)
+- ✅ **Página 404 editorial** con CTAs duales
+- ✅ **Login admin reestilizado** con focus dorado
+- ✅ **Toasts boutique oscuros** (fondo `#1A1A1A` + borde dorado `#D4AF37/40`)
+- ✅ **Layout Home editorial** con separadores `SectionDivider` y ScrollReveal en cada sección
+- ✅ **MissionVision asimétrico 60/40** con layering y control de ancho de título
+- ✅ **Materials con tarjetas uniformes** y contraste reforzado en degradado
+- ✅ **Values mosaico asimétrico** con texto condicional sobre imágenes
+- ✅ **Footer en 2 actos** (banner contacto + footer editorial con 3 columnas)
+- ✅ Diseño responsive mobile-first con hotfixes iterativos
 - ✅ Optimización de imágenes con Next.js Image (priority, lazy loading)
-- ✅ SEO optimizado con metadatos dinámicos
+- ✅ SEO optimizado con metadatos dinámicos y Open Graph
 - ✅ Tipografía serif (Playfair Display) + sans-serif (Geist)
-- ✅ Paleta de colores crema/antracita consistente
-- ✅ Animaciones sutiles y transiciones suaves
+- ✅ Paleta de colores crema/antracita/dorado consistente (sin colores corporativos externos)
+- ✅ Animaciones sutiles y transiciones suaves (Framer Motion)
 - ✅ Modal de reseñas con overlay cálido
 - ✅ Tratamiento visual unificado con mix-blend-multiply
 - ✅ Middleware de protección de rutas administrativas
 - ✅ Políticas RLS en Supabase para seguridad a nivel de fila
+- ✅ `scroll-behavior: smooth` global para ancla perfecta del Navbar
 
 **Stack tecnológico:**
 - Next.js 16.2.10 (App Router + Turbopack)
 - TypeScript (tipado estricto)
 - Tailwind CSS v4
-- Lucide React (iconos)
+- Lucide React (iconos) + SVGs inline para iconos no disponibles
+- Framer Motion (animaciones cinematográficas)
 - Supabase (PostgreSQL + Storage + Auth)
 - @supabase/ssr (gestión de sesiones)
 - Vercel (plataforma de deploy recomendada)
@@ -487,24 +717,42 @@
  src/
 ├── app/
 │   ├── actions/
-│   │   └── revalidate.ts (Server Action - invalidación de caché ISR)
+│   │   └── revalidate.ts (Server Action - revalidación / y /catalogo)
 │   ├── admin/
 │   │   ├── page.tsx (Server Component - carga inicial)
-│   │   ├── AdminDashboard.tsx (Client Component - CRUD)
-│   │   └── login/page.tsx (Pantalla de autenticación)
+│   │   ├── AdminDashboard.tsx (Client Component - CRUD + compresión WebP)
+│   │   └── login/page.tsx (Login premium con focus dorado)
 │   ├── catalogo/
 │   │   ├── page.tsx (Server Component, revalidate: 10s)
-│   │   └── CatalogGrid.tsx (Client Component con filtros)
-│   ├── layout.tsx
-│   ├── page.tsx
-│   └── globals.css
+│   │   ├── CatalogGrid.tsx (Client Component con Framer Motion + QuickView)
+│   │   └── loading.tsx (ProductSkeleton fallback automático)
+│   ├── layout.tsx (metadatos OpenGraph + Twitter Cards)
+│   ├── page.tsx (Home con ScrollReveal + SectionDivider)
+│   ├── not-found.tsx (página 404 editorial)
+│   ├── manifest.ts (PWA manifest tipado)
+│   └── globals.css (scroll-behavior smooth)
 ├── components/
-│   ├── common/ (Button, SectionTitle, WhatsAppFloating)
-│   ├── layout/ (Navbar, Footer)
-│   └── sections/ (Hero, MissionVision, ProductGrid, Values, Reviews)
-├── constants/
-│   └── data.ts (BRAND_INFO, BRAND_VALUES, CUSTOMER_REVIEWS)
+│   ├── catalogo/
+│   │   ├── FilterBar.tsx (filtros editoriales con underline animado)
+│   │   └── ProductSkeleton.tsx (skeleton con animate-pulse 2.2s)
+│   ├── common/
+│   │   ├── Button.tsx (variantes: primary, outline, invert)
+│   │   ├── ScrollReveal.tsx (wrapper de Framer Motion)
+│   │   ├── SectionDivider.tsx (línea 1px separadora)
+│   │   ├── SectionTitle.tsx (con número fantasma opcional)
+│   │   └── WhatsAppFloating.tsx (botón boutique monocromático)
+│   ├── layout/
+│   │   ├── Footer.tsx (2 actos: banner contacto + footer editorial)
+│   │   └── Navbar.tsx
+│   └── sections/
+│       ├── Hero.tsx
+│       ├── MissionVision.tsx (layout asimétrico 60/40 con layering)
+│       ├── Materials.tsx (3 tarjetas uniformes con stagger editorial)
+│       ├── ProductGrid.tsx (3 destacados conectados a Supabase)
+│       ├── Values.tsx (mosaico asimétrico con texto condicional)
+│       └── Reviews.tsx
 ├── lib/
+│   ├── image-compression.ts (Canvas → WebP quality 0.82)
 │   ├── supabase.ts (Cliente Supabase)
 │   └── supabase-products.ts (Funciones CRUD)
 ├── types/
