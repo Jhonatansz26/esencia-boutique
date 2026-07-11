@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Button from "@/components/common/Button";
@@ -13,10 +13,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = getSupabaseBrowserClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +67,7 @@ export default function AdminLoginPage() {
             </label>
             <input
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 border border-[#1A1A1A]/15 rounded-sm bg-transparent text-[#1A1A1A] tracking-wide focus:outline-none focus:ring-0 focus:border-[#D4AF37] transition-colors duration-300"
@@ -84,6 +82,7 @@ export default function AdminLoginPage() {
             </label>
             <input
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 border border-[#1A1A1A]/15 rounded-sm bg-transparent text-[#1A1A1A] tracking-wide focus:outline-none focus:ring-0 focus:border-[#D4AF37] transition-colors duration-300"

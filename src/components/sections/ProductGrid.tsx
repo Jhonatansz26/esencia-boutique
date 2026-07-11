@@ -3,15 +3,25 @@ import SectionTitle from "@/components/common/SectionTitle";
 import Button from "@/components/common/Button";
 import { getFeaturedProducts } from "@/lib/supabase-products";
 import { BRAND_INFO } from "@/constants/data";
+import { type ProductGridConfig, PRODUCT_GRID_DEFAULTS } from "@/types/sections";
 
-export default async function ProductGrid() {
+interface ProductGridProps {
+  /** Config object from the JSONB page_layout column in Supabase. */
+  config?: ProductGridConfig;
+}
+
+export default async function ProductGrid({ config }: ProductGridProps = {}) {
   const featuredProducts = await getFeaturedProducts();
+
+  const sectionTitle    = config?.sectionTitle    || PRODUCT_GRID_DEFAULTS.sectionTitle;
+  const sectionSubtitle = config?.sectionSubtitle || PRODUCT_GRID_DEFAULTS.sectionSubtitle;
+  const ctaText         = config?.ctaText         || PRODUCT_GRID_DEFAULTS.ctaText;
 
   return (
     <section id="coleccion" className="py-20 px-6 md:px-16">
       <SectionTitle
-        title="Colección Esencial"
-        subtitle="Piezas Seleccionadas"
+        title={sectionTitle}
+        subtitle={sectionSubtitle}
         alignment="center"
       />
 
@@ -40,7 +50,7 @@ export default async function ProductGrid() {
                 variant="outline"
                 className="w-full mt-4"
               >
-                Consultar por WhatsApp
+                {ctaText}
               </Button>
             </div>
           </div>

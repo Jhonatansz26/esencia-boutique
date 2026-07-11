@@ -25,23 +25,20 @@ export async function getPageLayout(pageSlug = "home"): Promise<SectionConfig[]>
       .eq("page_slug", pageSlug)
       .single();
 
-    if (error || !data) return DEFAULT_HOME_LAYOUT;
+    if (error) {
+      if (error.code === "42501") {
+        console.error("Error de autenticación en Supabase:", error);
+        throw new Error("No se pudo autenticar la lectura del layout");
+      }
+      return DEFAULT_HOME_LAYOUT;
+    }
+
+    if (!data) return DEFAULT_HOME_LAYOUT;
     return data.sections as SectionConfig[];
   } catch (err) {
+    if (err instanceof Error && err.message.includes("autenticar")) {
+      throw err;
+    }
     return DEFAULT_HOME_LAYOUT;
   }
-}
-
-export async function updatePageLayout(sections: SectionConfig[], pageSlug = "home"): Promise<boolean> {
-  const { error } = await supabase
-    .from("page_layout")
-    .upsert(
-      { page_slug: pageSlug, sections, updated_at: new Date().toISOString() },
-      { onConflict: "page_slug" }
-    );
-  if (error) {
-    console.error("Error updating page layout:", error);
-    return false;
-  }
-  return true;
 }

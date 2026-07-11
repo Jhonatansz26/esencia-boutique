@@ -31,8 +31,10 @@
 | DraggableSectionList | `src/components/admin/DraggableSectionList` | ✅ Completado | DnD con @dnd-kit + subformulario promo-banner |
 | EditModePanel | `src/components/admin/EditModePanel` | ✅ Completado | Panel lateral modo Diseñador/Canva |
 | ProductGridPreview | `src/components/admin/ProductGridPreview` | ✅ Completado | Preview síncrono con mock data para visual-editor |
+| ProductGridClient | `src/components/sections/ProductGridClient.tsx` | ✅ Completado | Preview cliente conectado a Supabase para visual-editor sin async Server Component |
 | Visual Editor | `src/app/admin/visual-editor` | ✅ Completado | Lienzo interactivo con edición inline tipo Canva |
 | Page Layout System | `src/lib/page-layout.ts` | ✅ Completado | Sistema dinámico de layout con Supabase |
+| Page Layout Server Action | `src/app/actions/page-layout.ts` | ✅ Completado | Guardado SSR de layouts con cookies Supabase y revalidación de Home |
 | EmptySectionState | `src/components/admin/EmptySectionState` | ✅ Completado | Placeholder para secciones vacías en modo editor |
 | DesignerTipBanner | `src/components/admin/DesignerTipBanner` | ✅ Completado | Banner onboarding dismissible con localStorage |
 | CanvasMetrics | `src/components/admin/CanvasMetrics` | ✅ Completado | Panel de métricas con badge de estado |
@@ -616,6 +618,7 @@
 src/
 ├── app/
 │   ├── actions/
+│   │   ├── page-layout.ts (Server Action - guardado SSR de layouts)
 │   │   └── revalidate.ts (Server Action - revalidación / y /catalogo)
 │   ├── admin/
 │   │   ├── page.tsx
@@ -661,13 +664,15 @@ src/
 │       ├── Hero.tsx (editable inline con contentEditable)
 │       ├── Materials.tsx (editable inline nombres de materiales)
 │       ├── Philosophy.tsx (editable inline Misión/Visión)
+│       ├── ProductGridClient.tsx (preview cliente para visual-editor)
 │       ├── ProductGrid.tsx (3 destacados async conectados a Supabase)
 │       ├── PromoBanner.tsx (countdown timer con auto-ocultamiento)
 │       ├── Values.tsx (mosaico asimétrico con texto condicional)
 │       └── Reviews.tsx
 ├── lib/
 │   ├── image-compression.ts (Canvas → WebP quality 0.82)
-│   ├── page-layout.ts (getPageLayout, updatePageLayout)
+│   ├── page-layout.ts (getPageLayout, DEFAULT_HOME_LAYOUT, toDraftSlug)
+│   ├── supabase-browser.ts (singleton cliente Supabase para componentes cliente)
 │   ├── supabase.ts
 │   └── supabase-products.ts
 ├── types/
@@ -922,6 +927,39 @@ src/
 
 ---
 
+### [Julio 2026: Estabilización del Editor Visual y Persistencia de Layout]
+
+#### **Guardado SSR de `page_layout`:**
+- **Problema:** El guardado de layouts desde componentes cliente dependía de un cliente Supabase de navegador y podía fallar en flujos protegidos por cookies/RLS.
+- **Solución:** Creación de `src/app/actions/page-layout.ts` como Server Action con `createServerClient`, `cookies()` y `revalidatePath("/")`.
+- **Upsert robusto:** `updatePageLayoutServer(sections, pageSlug)` ejecuta `.upsert({ page_slug, sections, updated_at }, { onConflict: "page_slug" })`.
+- **Draft/producción:** `visual-editor/page.tsx` guarda sobre `toDraftSlug(activeSlug)` para mantener separado el borrador (`home_draft`) de la página publicada (`home`).
+- **Lectura pública:** `src/lib/page-layout.ts` quedó enfocado en lectura SSR (`getPageLayout`, `DEFAULT_HOME_LAYOUT`, `toDraftSlug`) y dejó de exponer escritura cliente.
+
+#### **Cliente Supabase de Navegador Singleton:**
+- **Nuevo helper:** `src/lib/supabase-browser.ts` con `getSupabaseBrowserClient()` para evitar múltiples instancias del cliente en componentes cliente.
+- **Componentes migrados:** `AdminDashboard.tsx`, `login/page.tsx`, `CatalogGrid.tsx` e `ImageDropZone.tsx` usan el singleton.
+- **Compatibilidad SSR:** `src/lib/supabase.ts` se mantiene como cliente legacy `createClient` para lectura pública/prerender.
+
+#### **Paridad Visual Editor/Home:**
+- **ProductGrid:** Se agregó `src/components/sections/ProductGridClient.tsx` como Client Component para el editor visual, conectado a Supabase con skeleton de carga.
+- **Registro del editor:** `visual-editor/page.tsx` usa `"product-grid": ProductGridClient`, mientras la Home pública conserva `ProductGrid.tsx` async SSR.
+- **Home dinámica:** `src/app/page.tsx` normaliza `section.type.toLowerCase()`, usa grid de 12 columnas y pasa `config={section.config}` a las secciones dinámicas.
+- **Design tokens:** La Home inyecta tokens SSR con `getDesignTokens()` junto con `getPageLayout("home")`.
+
+#### **Hotfix de `Philosophy.tsx` para Misión/Visión:**
+- **Problema:** La edición inline de `mission`/`vision` podía construir el bloque actualizado desde `editableConfig` directo y tenía guardas que bloqueaban strings vacíos.
+- **Solución estructural:** `commitBlock()` ahora lee `effectiveConfig?.[block] || {}` para respetar los mismos fallbacks visuales usados en render.
+- **Limpieza de campos:** La guarda cambió a `value === null || value === undefined`, permitiendo guardar texto vacío intencionalmente.
+- **Seguridad runtime:** `isEmpty` reemplazó non-null assertions por optional chaining seguro para evitar crashes si faltan propiedades en `config`.
+
+#### **Validación:**
+- `npm run build` completado exitosamente con Next.js 16.2.10/Turbopack.
+- Warning conocido no bloqueante: Next.js recomienda migrar la convención `middleware` a `proxy`.
+- Durante prerender siguen apareciendo logs de mapeo de productos; no bloquean compilación ni TypeScript.
+
+---
+
 ## 🚀 4. Estado de Producción
 
 ### ✅ Proyecto Listo para Deploy
@@ -983,7 +1021,10 @@ src/
 - ✅ **Editor Visual en Vivo** (`/admin/visual-editor`) con lienzo interactivo tipo Canva/Webflow
 - ✅ **Edición inline con contentEditable** en Hero (título/subtítulo), Materials (nombres) y Philosophy (Misión/Visión)
 - ✅ **Indicadores visuales de edición** con anillo dorado al hover/focus
-- ✅ **Desacople de entornos** para resolver async Client Component: ProductGrid (SSR) vs ProductGridPreview (mock)
+- ✅ **Desacople de entornos** para resolver async Client Component: ProductGrid (SSR) vs ProductGridClient/ProductGridPreview en editor
+- ✅ **ProductGridClient** para preview real en editor visual sin romper el contrato de Server Components async
+- ✅ **Guardado SSR de layouts** con `updatePageLayoutServer`, cookies Supabase y `revalidatePath("/")`
+- ✅ **Hotfix Philosophy**: `commitBlock` usa `effectiveConfig`, permite strings vacíos y evita non-null assertions frágiles
 - ✅ **Refactorización inmutable** con `onConfigChange` para evitar bugs de React 18 batching
 - ✅ **Tipado estricto** en `src/types/layout.ts` con SectionType, SectionConfig, PageLayout
 - ✅ **Empty States** con borde dorado punteado para secciones vacías en modo editor
@@ -1013,6 +1054,7 @@ src/
  src/
 ├── app/
 │   ├── actions/
+│   │   ├── page-layout.ts (Server Action - guardado SSR de layouts)
 │   │   └── revalidate.ts (Server Action - revalidación / y /catalogo)
 │   ├── admin/
 │   │   ├── page.tsx (Server Component - carga inicial)
@@ -1058,14 +1100,16 @@ src/
 │       ├── Hero.tsx (editable inline con contentEditable)
 │       ├── Materials.tsx (editable inline nombres de materiales)
 │       ├── Philosophy.tsx (editable inline Misión/Visión)
+│       ├── ProductGridClient.tsx (preview cliente para visual-editor)
 │       ├── ProductGrid.tsx (3 destacados async conectados a Supabase)
 │       ├── PromoBanner.tsx (countdown timer con auto-ocultamiento)
 │       ├── Values.tsx (mosaico asimétrico con texto condicional)
 │       └── Reviews.tsx
 ├── lib/
 │   ├── image-compression.ts (Canvas → WebP quality 0.82)
-│   ├── page-layout.ts (getPageLayout, updatePageLayout)
-│   ├── supabase.ts (Cliente Supabase)
+│   ├── page-layout.ts (getPageLayout, DEFAULT_HOME_LAYOUT, toDraftSlug)
+│   ├── supabase-browser.ts (singleton cliente Supabase para componentes cliente)
+│   ├── supabase.ts (Cliente Supabase legacy para SSR/prerender)
 │   └── supabase-products.ts (Funciones CRUD)
 ├── types/
 │   ├── index.ts (Review)

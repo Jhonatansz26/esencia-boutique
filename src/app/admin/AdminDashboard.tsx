@@ -11,7 +11,7 @@ import {
   getAllProducts,
 } from "@/lib/supabase-products";
 import { compressImage } from "@/lib/image-compression";
-import { createBrowserClient } from "@supabase/ssr";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { revalidateCatalogo } from "@/app/actions/revalidate";
 import { X, Save, Loader2, Plus, Trash2, Upload, Edit, Settings, Paintbrush } from "lucide-react";
@@ -31,10 +31,7 @@ interface Category {
 
 export default function AdminDashboard({ initialProducts }: AdminDashboardProps) {
   const router = useRouter();
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = getSupabaseBrowserClient();
 
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -528,10 +525,10 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
             <Settings size={18} className="inline mr-2" />
             Configurar Contacto
           </Button>
-          <Link href="/admin/visual-editor">
+          <Link href="/admin/modo-disenador">
             <Button variant="outline">
               <Paintbrush size={18} className="inline mr-2" />
-              Editor Visual
+              Modo Diseñador
             </Button>
           </Link>
         </div>

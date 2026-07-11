@@ -1,14 +1,16 @@
 "use client";
 
-import { BRAND_VALUES } from "@/constants/data";
 import Image from "next/image";
 import { SECTION_THEMES, SectionThemeId } from "@/lib/section-themes";
+import EditableText from "@/components/admin/EditableText";
+import { BRAND_VALUES } from "@/constants/data";
+import { type ValuesConfig, VALUES_DEFAULTS } from "@/types/sections";
 
 interface ValuesProps {
-  editableConfig?: {
-    theme?: SectionThemeId;
-    [key: string]: unknown;
-  };
+  config?: ValuesConfig;
+  editableConfig?: ValuesConfig;
+  editable?: boolean;
+  onUpdateConfig?: (key: string, value: unknown) => void;
 }
 
 interface MosaicBlock {
@@ -46,30 +48,91 @@ const MOSAIC_LAYOUT: Omit<MosaicBlock, "title" | "description">[] = [
   },
 ];
 
-const mosaicValues: MosaicBlock[] = BRAND_VALUES.map((value, index) => ({
-  ...value,
-  ...MOSAIC_LAYOUT[index],
-}));
+export default function Values({
+  config,
+  editableConfig,
+  editable = false,
+  onUpdateConfig,
+}: ValuesProps) {
+  const activeConfig = editable ? (editableConfig ?? config) : config;
 
-export default function Values({ editableConfig }: ValuesProps) {
-  const themeId = (editableConfig?.theme as SectionThemeId) ?? "default";
+  const themeId = (activeConfig?.theme as SectionThemeId) ?? "default";
   const theme = SECTION_THEMES[themeId];
+
+  const eyebrow = activeConfig?.eyebrow || VALUES_DEFAULTS.eyebrow;
+  const sectionTitle = activeConfig?.sectionTitle || VALUES_DEFAULTS.sectionTitle;
+  const configItems = activeConfig?.items || [];
+
+  // Re-run every render so it reacts to config changes
+  const mosaicValues: MosaicBlock[] = BRAND_VALUES.map((defaultVal, index) => {
+    const customVal = configItems[index];
+    return {
+      title: customVal?.title ?? defaultVal.title,
+      description: customVal?.description ?? defaultVal.description,
+      ...MOSAIC_LAYOUT[index],
+    };
+  });
+
+  const commitItemTitle = (index: number, newTitle: string) => {
+    if (!onUpdateConfig) return;
+    const updated = mosaicValues.map((v) => ({
+      title: v.title,
+      description: v.description,
+    }));
+    updated[index] = { ...updated[index], title: newTitle };
+    onUpdateConfig("items", updated);
+  };
+
+  const commitItemDescription = (index: number, newDesc: string) => {
+    if (!onUpdateConfig) return;
+    const updated = mosaicValues.map((v) => ({
+      title: v.title,
+      description: v.description,
+    }));
+    updated[index] = { ...updated[index], description: newDesc };
+    onUpdateConfig("items", updated);
+  };
+
+  const editRingClass =
+    "cursor-text rounded-sm ring-offset-2 ring-offset-[var(--color-brand-surface,#FDFBF7)] " +
+    "hover:ring-2 hover:ring-[var(--color-brand-primary,#D4AF37)]/30 " +
+    "focus:ring-2 focus:ring-[var(--color-brand-primary,#D4AF37)]/50 transition-all px-1 -mx-1";
 
   return (
     <section className={`py-24 md:py-36 px-6 md:px-16 ${theme.bgClass} ${theme.textClass}`}>
       <div className="max-w-6xl mx-auto mb-16">
-        <p className="text-xs uppercase tracking-[0.2em] text-stone-500 mb-3">
-          Diferencial
-        </p>
-        <h2 className="font-serif text-4xl md:text-5xl text-[#1A1A1A] tracking-wide">
-          Lujo sin exceso
-        </h2>
+        {editable && onUpdateConfig ? (
+          <>
+            <EditableText
+              as="p"
+              value={eyebrow}
+              onCommit={(v) => onUpdateConfig("eyebrow", v)}
+              className={`text-xs uppercase tracking-[0.2em] text-stone-500 mb-3 ${editRingClass}`}
+            />
+            <EditableText
+              as="h2"
+              value={sectionTitle}
+              onCommit={(v) => onUpdateConfig("sectionTitle", v)}
+              enableAI
+              className={`font-serif text-4xl md:text-5xl text-[#1A1A1A] tracking-wide ${editRingClass}`}
+            />
+          </>
+        ) : (
+          <>
+            <p className="text-xs uppercase tracking-[0.2em] text-stone-500 mb-3">
+              {eyebrow}
+            </p>
+            <h2 className="font-serif text-4xl md:text-5xl text-[#1A1A1A] tracking-wide">
+              {sectionTitle}
+            </h2>
+          </>
+        )}
       </div>
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-4 md:gap-6 lg:auto-rows-[180px]">
-        {mosaicValues.map((value) => (
+        {mosaicValues.map((value, index) => (
           <div
-            key={value.title}
+            key={value.number}
             className={`relative overflow-hidden border border-[#1A1A1A]/10 ${value.spanClass} ${value.heightClass} ${
               value.bgImage ? "bg-transparent" : value.large ? "bg-[#FAF7F2]" : "bg-[#FDFBF7]"
             }`}
@@ -122,27 +185,69 @@ export default function Values({ editableConfig }: ValuesProps) {
                 <>
                   <div className={`h-px w-10 mt-2 ${value.bgImage ? "bg-white/40" : "bg-[#1A1A1A]/30"}`} />
                   <div className="mt-auto">
-                    <h3 className={`text-sm md:text-base font-medium uppercase tracking-[0.15em] mb-3 ${
-                      value.bgImage ? "text-white" : "text-[#1A1A1A]"
-                    }`}>
-                      {value.title}
-                    </h3>
-                    <p className={`text-sm leading-relaxed max-w-xs ${
-                      value.bgImage ? "text-stone-200" : "text-gray-600"
-                    }`}>
-                      {value.description}
-                    </p>
+                    {editable && onUpdateConfig ? (
+                      <>
+                        <EditableText
+                          as="h3"
+                          value={value.title}
+                          onCommit={(v) => commitItemTitle(index, v)}
+                          className={`text-sm md:text-base font-medium uppercase tracking-[0.15em] mb-3 ${
+                            value.bgImage ? "text-white" : "text-[#1A1A1A]"
+                          } ${editRingClass}`}
+                        />
+                        <EditableText
+                          as="p"
+                          value={value.description}
+                          onCommit={(v) => commitItemDescription(index, v)}
+                          className={`text-sm leading-relaxed max-w-xs ${
+                            value.bgImage ? "text-stone-200" : "text-gray-600"
+                          } ${editRingClass}`}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <h3 className={`text-sm md:text-base font-medium uppercase tracking-[0.15em] mb-3 ${
+                          value.bgImage ? "text-white" : "text-[#1A1A1A]"
+                        }`}>
+                          {value.title}
+                        </h3>
+                        <p className={`text-sm leading-relaxed max-w-xs ${
+                          value.bgImage ? "text-stone-200" : "text-gray-600"
+                        }`}>
+                          {value.description}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </>
               ) : (
                 <>
                   <div className="h-px w-10 bg-[#1A1A1A]/30 mb-4" />
-                  <h3 className="text-sm md:text-base font-medium text-[#1A1A1A] uppercase tracking-[0.15em] mb-3">
-                    {value.title}
-                  </h3>
-                  <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
-                    {value.description}
-                  </p>
+                  {editable && onUpdateConfig ? (
+                    <>
+                      <EditableText
+                        as="h3"
+                        value={value.title}
+                        onCommit={(v) => commitItemTitle(index, v)}
+                        className={`text-sm md:text-base font-medium text-[#1A1A1A] uppercase tracking-[0.15em] mb-3 ${editRingClass}`}
+                      />
+                      <EditableText
+                        as="p"
+                        value={value.description}
+                        onCommit={(v) => commitItemDescription(index, v)}
+                        className={`text-xs md:text-sm text-gray-600 leading-relaxed ${editRingClass}`}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-sm md:text-base font-medium text-[#1A1A1A] uppercase tracking-[0.15em] mb-3">
+                        {value.title}
+                      </h3>
+                      <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
+                        {value.description}
+                      </p>
+                    </>
+                  )}
                 </>
               )}
             </div>

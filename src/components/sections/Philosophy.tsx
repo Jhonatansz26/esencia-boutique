@@ -5,6 +5,11 @@ import EmptySectionState from "@/components/admin/EmptySectionState";
 import { SECTION_THEMES, SectionThemeId } from "@/lib/section-themes";
 
 interface PhilosophyProps {
+  config?: {
+    mission?: { title?: string; description?: string };
+    vision?: { title?: string; description?: string };
+    [key: string]: unknown;
+  };
   editable?: boolean;
   editableConfig?: {
     mission?: { title?: string; description?: string };
@@ -26,32 +31,34 @@ const DEFAULT_VISION = {
     "Ser una boutique reconocida a nivel regional y nacional por su excelencia, innovación y compromiso con la moda, consolidándonos como la primera opción de nuestros clientes por la calidad de nuestros productos y el servicio que ofrecemos.",
 };
 
-export default function Philosophy({ editable, editableConfig, onUpdateConfig }: PhilosophyProps) {
-  const themeId = (editableConfig?.theme as SectionThemeId) ?? "default";
+export default function Philosophy({ config, editable, editableConfig, onUpdateConfig }: PhilosophyProps) {
+  const effectiveConfig = editable ? editableConfig : (config ?? editableConfig);
+
+  const themeId = (effectiveConfig?.theme as SectionThemeId) ?? "default";
   const theme = SECTION_THEMES[themeId];
 
   const isEmpty =
     editable &&
-    (!editableConfig?.mission?.title || editableConfig.mission.title.trim() === "") &&
-    (!editableConfig?.vision?.title || editableConfig.vision.title.trim() === "");
+    (!effectiveConfig?.mission?.title || effectiveConfig.mission.title.trim() === "") &&
+    (!effectiveConfig?.vision?.title || effectiveConfig.vision.title.trim() === "");
 
   if (isEmpty) {
     return <EmptySectionState sectionType="philosophy" />;
   }
 
   const mission = {
-    title: editableConfig?.mission?.title || DEFAULT_MISSION.title,
-    description: editableConfig?.mission?.description || DEFAULT_MISSION.description,
+    title: effectiveConfig?.mission?.title || DEFAULT_MISSION.title,
+    description: effectiveConfig?.mission?.description || DEFAULT_MISSION.description,
   };
 
   const vision = {
-    title: editableConfig?.vision?.title || DEFAULT_VISION.title,
-    description: editableConfig?.vision?.description || DEFAULT_VISION.description,
+    title: effectiveConfig?.vision?.title || DEFAULT_VISION.title,
+    description: effectiveConfig?.vision?.description || DEFAULT_VISION.description,
   };
 
   const commitBlock = (block: "mission" | "vision", field: "title" | "description", value: string) => {
-    if (!onUpdateConfig || !value) return;
-    const currentBlock = editableConfig?.[block] || {};
+    if (!onUpdateConfig || value === null || value === undefined) return;
+    const currentBlock = effectiveConfig?.[block] || {};
     const updatedBlock = { ...currentBlock, [field]: value };
     onUpdateConfig(block, updatedBlock);
   };

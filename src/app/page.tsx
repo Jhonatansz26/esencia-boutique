@@ -31,6 +31,8 @@ export default async function Home() {
     .filter((s) => s.visible && s.type !== "hero")
     .sort((a, b) => a.order - b.order);
 
+  const heroSection = sections.find((s) => s.type === "hero");
+
   return (
     <>
       {designTokens && (
@@ -46,22 +48,31 @@ export default async function Home() {
         `}</style>
       )}
       <main>
-        <Hero />
-        <SectionDivider />
+        <div className="grid grid-cols-12 gap-4 px-4 py-6 w-full">
+          <div className="col-span-12">
+            <Hero editableConfig={heroSection?.config} />
+          </div>
+          <div className="col-span-12">
+            <SectionDivider />
+          </div>
 
-        {orderedVisibleSections.map((section, index) => {
-          const SectionComponent = SECTION_REGISTRY[section.type];
-          if (!SectionComponent) return null;
+          {orderedVisibleSections.map((section, index) => {
+            const normalizedType = section.type.toLowerCase();
+            const SectionComponent = SECTION_REGISTRY[normalizedType];
+            if (!SectionComponent) return null;
 
-          return (
-            <div key={section.id}>
-              <ScrollReveal>
-                <SectionComponent config={section.config} />
-              </ScrollReveal>
-              {index < orderedVisibleSections.length - 1 && <SectionDivider />}
-            </div>
-          );
-        })}
+            const spanClass = section.layoutColumns === 6 ? "col-span-12 md:col-span-6" : "col-span-12";
+
+            return (
+              <div key={section.id} className={spanClass}>
+                <ScrollReveal>
+                  <SectionComponent config={section.config} />
+                </ScrollReveal>
+                {index < orderedVisibleSections.length - 1 && <SectionDivider />}
+              </div>
+            );
+          })}
+        </div>
       </main>
     </>
   );

@@ -114,6 +114,8 @@ export async function discardDraft(pageSlug: string = "home"): Promise<PublishRe
     return { success: false, message: "Error al descartar el borrador." };
   }
 
+  revalidatePath("/");
+
   return { success: true, message: "Borrador restablecido a la versión publicada." };
 }
 
@@ -175,6 +177,8 @@ export async function rollbackToVersion(
   if (draftUpdateError) {
     return { success: false, message: "Error al restaurar la versión en el borrador." };
   }
+
+  revalidatePath("/");
 
   return { success: true, message: "Versión restaurada en tu borrador." };
 }

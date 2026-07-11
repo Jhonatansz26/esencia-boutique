@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Loader2, Save, LayoutPanelTop, X, Globe, Trash2 } from "lucide-react";
 import { SectionConfig } from "@/types/layout";
-import { getPageLayout, updatePageLayout } from "@/lib/page-layout";
+import { getPageLayout } from "@/lib/page-layout";
+import { updatePageLayoutServer } from "@/app/actions/page-layout";
 import DraggableSectionList from "@/components/admin/DraggableSectionList";
 import PublishHistoryPanel from "@/components/admin/PublishHistoryPanel";
 import TemplateLibrary from "@/components/admin/TemplateLibrary";
@@ -93,7 +94,7 @@ export default function EditModePanel(props: EditModePanelProps) {
       if (canvas) {
         success = await props.onSave(sections);
       } else {
-        success = await updatePageLayout(sections, pageSlug);
+        success = await updatePageLayoutServer(sections, pageSlug);
       }
 
       if (success) {
@@ -163,10 +164,10 @@ export default function EditModePanel(props: EditModePanelProps) {
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-[#D4AF37] mb-1">
-              Modo Canva
+              Modo Diseñador
             </p>
             <h2 className="font-serif text-lg text-[#FDFBF7] tracking-wide">
-              Editor Visual
+              Lienzo de Diseño
             </h2>
           </div>
         </div>

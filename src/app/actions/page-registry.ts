@@ -112,7 +112,7 @@ export async function createNewPageAction(
       { onConflict: "page_slug" }
     );
 
-  revalidatePath("/admin/visual-editor");
+  revalidatePath("/admin/modo-disenador");
 
   return { success: true, message: `Página "${label}" creada con éxito.` };
 }

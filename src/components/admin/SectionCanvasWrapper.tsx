@@ -2,6 +2,8 @@
 
 import { useState, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { ArrowUp, ArrowDown, Eye, EyeOff, Copy, GripVertical, BookmarkPlus, SlidersHorizontal } from "lucide-react";
 import { SectionConfig } from "@/types/layout";
 import { SectionThemeId } from "@/lib/section-themes";
@@ -58,6 +60,21 @@ export default function SectionCanvasWrapper({
   const currentFilters = (section.config?.imageFilters as ImageFilters | undefined) ?? DEFAULT_IMAGE_FILTERS;
   const layoutColumns = section.layoutColumns ?? 12;
   const gridSpanClass = layoutColumns === 6 ? "col-span-12 md:col-span-6" : "col-span-12";
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const sortableStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : "auto",
+  };
 
   const triggerFlash = () => {
     setFlashKey((prev) => prev + 1);
@@ -128,14 +145,14 @@ export default function SectionCanvasWrapper({
 
   return (
     <motion.div
-      className={`relative group cursor-pointer ${gridSpanClass}`}
+      ref={setNodeRef}
+      style={sortableStyle}
+      className={`relative group cursor-pointer ${gridSpanClass} ${isDragging ? "shadow-2xl ring-2 ring-[#D4AF37]" : ""}`}
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
       }}
       onContextMenu={handleContextMenu}
-      animate={{ opacity: section.visible ? 1 : 0.4 }}
-      transition={{ duration: 0.3 }}
     >
       <div
         className={`pointer-events-none absolute inset-0 z-20 transition-all duration-200 ${
@@ -154,23 +171,50 @@ export default function SectionCanvasWrapper({
         </>
       )}
 
-      {isSelected && (
-        <div className="absolute -top-3 left-4 z-30 flex items-center gap-1.5 px-3 py-1 rounded-sm bg-[#1A1A1A] text-[#FDFBF7] text-[10px] uppercase tracking-widest shadow-md select-none">
-          <GripVertical size={10} className="text-[#D4AF37]" />
-          {label}
-        </div>
-      )}
+      <div 
+        {...attributes}
+        {...listeners}
+        className={`absolute -top-3 left-4 z-30 flex items-center gap-1.5 px-3 py-1 rounded-sm bg-[#1A1A1A] text-[#FDFBF7] text-[10px] uppercase tracking-widest shadow-md select-none cursor-grab active:cursor-grabbing transition-opacity duration-200 ${
+          isSelected || isDragging ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        }`}
+      >
+        <GripVertical size={10} className="text-[#D4AF37]" />
+        {label}
+      </div>
 
       {isSelected && (
-        <div className="absolute -top-3 right-4 z-30 flex items-center gap-0.5 px-1.5 py-1 rounded-sm bg-[#1A1A1A]/95 backdrop-blur-sm shadow-lg" onClick={(e) => e.stopPropagation()}>
-          <button type="button" disabled={isFirst} onClick={handleMoveUp} className="w-7 h-7 flex items-center justify-center text-white/70 hover:text-[#D4AF37] disabled:opacity-20"><ArrowUp size={14} /></button>
-          <button type="button" disabled={isLast} onClick={handleMoveDown} className="w-7 h-7 flex items-center justify-center text-white/70 hover:text-[#D4AF37] disabled:opacity-20"><ArrowDown size={14} /></button>
+        <div className="absolute -top-3 right-4 z-30 flex items-center gap-0.5 px-2 py-1 rounded-sm bg-[#1A1A1A]/95 backdrop-blur-sm shadow-lg select-none" onClick={(e) => e.stopPropagation()}>
+          <button type="button" disabled={isFirst} onClick={handleMoveUp} className="flex items-center gap-1 px-1.5 py-1 text-white/70 hover:text-[#D4AF37] disabled:opacity-20 transition-colors group" title="Mover arriba">
+            <ArrowUp size={12} />
+            <span className="text-[9px] font-medium tracking-wider opacity-0 max-w-0 overflow-hidden group-hover:opacity-100 group-hover:max-w-[50px] transition-all duration-200">ARRIBA</span>
+          </button>
+
+          <button type="button" disabled={isLast} onClick={handleMoveDown} className="flex items-center gap-1 px-1.5 py-1 text-white/70 hover:text-[#D4AF37] disabled:opacity-20 transition-colors group" title="Mover abajo">
+            <ArrowDown size={12} />
+            <span className="text-[9px] font-medium tracking-wider opacity-0 max-w-0 overflow-hidden group-hover:opacity-100 group-hover:max-w-[50px] transition-all duration-200">ABAJO</span>
+          </button>
+
           <div className="w-px h-4 bg-white/15 mx-1" />
-          <button type="button" onClick={handleToggleVisibility} className="w-7 h-7 flex items-center justify-center text-white/70 hover:text-[#D4AF37]">{section.visible ? <Eye size={14} /> : <EyeOff size={14} />}</button>
+
+          <button type="button" onClick={handleToggleVisibility} className="flex items-center gap-1 px-1.5 py-1 text-white/70 hover:text-[#D4AF37] transition-colors group" title={section.visible ? "Ocultar sección" : "Mostrar sección"}>
+            {section.visible ? <Eye size={12} /> : <EyeOff size={12} />}
+            <span className="text-[9px] font-medium tracking-wider opacity-0 max-w-0 overflow-hidden group-hover:opacity-100 group-hover:max-w-[60px] transition-all duration-200">
+              {section.visible ? "OCULTAR" : "MOSTRAR"}
+            </span>
+          </button>
+
           <div className="w-px h-4 bg-white/15 mx-1" />
-          <button type="button" onClick={handleDuplicate} className="w-7 h-7 flex items-center justify-center text-white/70 hover:text-[#D4AF37]"><Copy size={14} /></button>
-          <div className="w-px h-4 bg-white/15 mx-1" />
-          <button type="button" onClick={openTemplateModal} className="w-7 h-7 flex items-center justify-center text-white/70 hover:text-[#D4AF37]" title="Guardar como plantilla"><BookmarkPlus size={14} /></button>
+
+          <button type="button" onClick={handleDuplicate} className="flex items-center gap-1 px-1.5 py-1 text-white/70 hover:text-[#D4AF37] transition-colors group" title="Duplicar sección">
+            <Copy size={12} />
+            <span className="text-[9px] font-medium tracking-wider opacity-0 max-w-0 overflow-hidden group-hover:opacity-100 group-hover:max-w-[50px] transition-all duration-200">CLONAR</span>
+          </button>
+
+          <button type="button" onClick={openTemplateModal} className="flex items-center gap-1 px-1.5 py-1 text-white/70 hover:text-[#D4AF37] transition-colors group" title="Guardar como plantilla">
+            <BookmarkPlus size={12} />
+            <span className="text-[9px] font-medium tracking-wider opacity-0 max-w-0 overflow-hidden group-hover:opacity-100 group-hover:max-w-[65px] transition-all duration-200">PLANTILLA</span>
+          </button>
+
           {hasImages && (
             <>
               <div className="w-px h-4 bg-white/15 mx-1" />
@@ -178,12 +222,13 @@ export default function SectionCanvasWrapper({
                 <button
                   type="button"
                   onClick={() => setShowFilterPanel((prev) => !prev)}
-                  className={`w-7 h-7 flex items-center justify-center transition-colors ${
+                  className={`flex items-center gap-1 px-1.5 py-1 transition-colors group ${
                     showFilterPanel ? "text-[#D4AF37]" : "text-white/70 hover:text-[#D4AF37]"
                   }`}
                   title="Filtros de imagen"
                 >
-                  <SlidersHorizontal size={14} />
+                  <SlidersHorizontal size={12} />
+                  <span className="text-[9px] font-medium tracking-wider opacity-0 max-w-0 overflow-hidden group-hover:opacity-100 group-hover:max-w-[50px] transition-all duration-200">FILTROS</span>
                 </button>
                 <AnimatePresence>
                   {showFilterPanel && (
@@ -205,7 +250,23 @@ export default function SectionCanvasWrapper({
         </div>
       )}
 
-      {children}
+      {!section.visible ? (
+        <div className="flex flex-col items-center justify-center p-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg m-4" onClick={(e) => e.stopPropagation()}>
+          <EyeOff size={28} className="text-gray-400 mb-3" />
+          <span className="text-sm font-medium text-gray-500 mb-4">
+            {label} (Oculto)
+          </span>
+          <button 
+            type="button"
+            onClick={(e) => { e.stopPropagation(); handleToggleVisibility(); }}
+            className="text-xs py-1.5 px-4 bg-white border border-gray-200 rounded shadow-sm hover:bg-gray-50 text-gray-700 font-medium transition-colors"
+          >
+            Mostrar Sección
+          </button>
+        </div>
+      ) : (
+        children
+      )}
 
       <motion.div
         key={flashKey}

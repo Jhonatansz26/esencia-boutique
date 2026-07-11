@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { Product, ProductGender } from "@/types/product";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { BRAND_INFO } from "@/constants/data";
 import Button from "@/components/common/Button";
 import FilterBar from "@/components/catalogo/FilterBar";
@@ -31,6 +31,7 @@ export default function CatalogGrid({ initialProducts }: CatalogGridProps) {
 
   useEffect(() => {
     async function loadCategories() {
+      const supabase = getSupabaseBrowserClient();
       const { data, error } = await supabase
         .from("categories")
         .select("slug, name")

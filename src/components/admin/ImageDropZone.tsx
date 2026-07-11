@@ -3,7 +3,7 @@
 import { useState, useCallback, type DragEvent, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { compressImage } from "@/lib/image-compression";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 interface ImageDropZoneProps {
   sectionId: string;
@@ -44,6 +44,7 @@ export default function ImageDropZone({
 
   const uploadToSupabase = useCallback(
     async (file: File): Promise<string | null> => {
+      const supabase = getSupabaseBrowserClient();
       const timestamp = Date.now();
       const filePath = `layout/${sectionId}-${timestamp}.webp`;
 
