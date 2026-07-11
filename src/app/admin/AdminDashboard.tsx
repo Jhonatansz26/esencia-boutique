@@ -14,9 +14,10 @@ import { compressImage } from "@/lib/image-compression";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { revalidateCatalogo } from "@/app/actions/revalidate";
-import { X, Save, Loader2, Plus, Trash2, Upload, Edit, Settings } from "lucide-react";
+import { X, Save, Loader2, Plus, Trash2, Upload, Edit, Settings, Paintbrush } from "lucide-react";
 import Button from "@/components/common/Button";
 import Link from "next/link";
+import EditModePanel from "@/components/admin/EditModePanel";
 
 interface AdminDashboardProps {
   initialProducts: Product[];
@@ -527,6 +528,12 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
             <Settings size={18} className="inline mr-2" />
             Configurar Contacto
           </Button>
+          <Link href="/admin/visual-editor">
+            <Button variant="outline">
+              <Paintbrush size={18} className="inline mr-2" />
+              Editor Visual
+            </Button>
+          </Link>
         </div>
 
         {/* Barra de Búsqueda y Filtros */}
@@ -1084,6 +1091,8 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
           </div>
         </div>
       )}
+
+      <EditModePanel pageSlug="home" />
     </div>
   );
 }

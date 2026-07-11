@@ -1,5 +1,15 @@
+"use client";
+
 import { BRAND_VALUES } from "@/constants/data";
 import Image from "next/image";
+import { SECTION_THEMES, SectionThemeId } from "@/lib/section-themes";
+
+interface ValuesProps {
+  editableConfig?: {
+    theme?: SectionThemeId;
+    [key: string]: unknown;
+  };
+}
 
 interface MosaicBlock {
   title: string;
@@ -41,9 +51,12 @@ const mosaicValues: MosaicBlock[] = BRAND_VALUES.map((value, index) => ({
   ...MOSAIC_LAYOUT[index],
 }));
 
-export default function Values() {
+export default function Values({ editableConfig }: ValuesProps) {
+  const themeId = (editableConfig?.theme as SectionThemeId) ?? "default";
+  const theme = SECTION_THEMES[themeId];
+
   return (
-    <section className="py-24 md:py-36 px-6 md:px-16">
+    <section className={`py-24 md:py-36 px-6 md:px-16 ${theme.bgClass} ${theme.textClass}`}>
       <div className="max-w-6xl mx-auto mb-16">
         <p className="text-xs uppercase tracking-[0.2em] text-stone-500 mb-3">
           Diferencial

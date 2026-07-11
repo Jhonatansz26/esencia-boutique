@@ -13,13 +13,14 @@
 | Tipos y Datos Estáticos | `src/types`, `src/constants` | ✅ Completado | Modelos e información de la marca |
 | Componentes Atómicos (Botón/Título) | `src/components/common` | ✅ Completado | Botones (primary/outline/invert) y títulos Serif con número fantasma |
 | Navbar & Footer | `src/components/layout` | ✅ Completado | Footer editorial en 2 actos (banner contacto + 3 columnas) |
-| Hero Section | `src/components/sections` | ✅ Completado | Portada con eslogan principal |
-| Filosofía de Marca (BrandStory) | `src/components/sections/MissionVision` | ✅ Completado | Layout asimétrico editorial 60/40 con layering |
-| Sección Materiales | `src/components/sections/Materials` | ✅ Completado | 3 tarjetas uniformes con degradado y stagger editorial |
-| Catálogo Destacado (Home) | `src/components/sections/ProductGrid` | ✅ Completado | Cuadrícula con enlaces directos a WhatsApp |
+| Hero Section | `src/components/sections` | ✅ Completado | Portada con eslogan principal, editable inline en visual-editor |
+| Filosofía de Marca (Philosophy) | `src/components/sections/Philosophy.tsx` | ✅ Completado | Misión/Visión con edición inline en visual-editor |
+| Sección Materiales | `src/components/sections/Materials.tsx` | ✅ Completado | 3 tarjetas uniformes con degradado, nombres editables inline |
+| Catálogo Destacado (Home) | `src/components/sections/ProductGrid.tsx` | ✅ Completado | Cuadrícula con enlaces directos a WhatsApp (async SSR) |
 | Catálogo Completo | `src/app/catalogo/CatalogGrid` | ✅ Completado | Filtros editoriales + QuickView modal + Framer Motion |
-| Valores (Mosaico) | `src/components/sections/Values` | ✅ Completado | Mosaico asimétrico con marcas de agua y soporte imagen |
-| Reseñas (Testimonios) | `src/components/sections/Reviews` | ✅ Completado | Carrusel/Cuadrícula de opiniones de clientes |
+| Valores (Mosaico) | `src/components/sections/Values.tsx` | ✅ Completado | Mosaico asimétrico con marcas de agua y soporte imagen |
+| Reseñas (Testimonios) | `src/components/sections/Reviews.tsx` | ✅ Completado | Carrusel/Cuadrícula de opiniones de clientes |
+| Banner Promocional | `src/components/sections/PromoBanner.tsx` | ✅ Completado | Countdown timer con auto-ocultamiento por expiración |
 | Página 404 | `src/app/not-found` | ✅ Completado | Página editorial con CTAs duales |
 | PWA Manifest | `src/app/manifest` | ✅ Completado | Configuración tipada para móvil |
 | ScrollReveal | `src/components/common/ScrollReveal` | ✅ Completado | Wrapper de animaciones `whileInView` |
@@ -27,6 +28,15 @@
 | FilterBar | `src/components/catalogo/FilterBar` | ✅ Completado | Filtros editoriales con underline dorado animado |
 | ProductSkeleton | `src/components/catalogo/ProductSkeleton` | ✅ Completado | Skeleton con `animate-pulse` premium |
 | Compresión WebP | `src/lib/image-compression` | ✅ Completado | Canvas → WebP quality 0.82 en cliente |
+| DraggableSectionList | `src/components/admin/DraggableSectionList` | ✅ Completado | DnD con @dnd-kit + subformulario promo-banner |
+| EditModePanel | `src/components/admin/EditModePanel` | ✅ Completado | Panel lateral modo Diseñador/Canva |
+| ProductGridPreview | `src/components/admin/ProductGridPreview` | ✅ Completado | Preview síncrono con mock data para visual-editor |
+| Visual Editor | `src/app/admin/visual-editor` | ✅ Completado | Lienzo interactivo con edición inline tipo Canva |
+| Page Layout System | `src/lib/page-layout.ts` | ✅ Completado | Sistema dinámico de layout con Supabase |
+| EmptySectionState | `src/components/admin/EmptySectionState` | ✅ Completado | Placeholder para secciones vacías en modo editor |
+| DesignerTipBanner | `src/components/admin/DesignerTipBanner` | ✅ Completado | Banner onboarding dismissible con localStorage |
+| CanvasMetrics | `src/components/admin/CanvasMetrics` | ✅ Completado | Panel de métricas con badge de estado |
+| SectionCanvasWrapper | `src/components/admin/SectionCanvasWrapper` | ✅ Completado | Wrapper con toolbar flotante y selección controlada |
 
 ## 📝 3. Historial de Cambios (Changelog)
 ### [Fase 1: Infraestructura Base]
@@ -609,18 +619,32 @@ src/
 │   │   └── revalidate.ts (Server Action - revalidación / y /catalogo)
 │   ├── admin/
 │   │   ├── page.tsx
-│   │   ├── AdminDashboard.tsx (compresión WebP, toasts boutique)
-│   │   └── login/page.tsx (estética premium con focus dorado)
+│   │   ├── AdminDashboard.tsx (compresión WebP, toasts boutique, botón Editor Visual)
+│   │   ├── login/page.tsx (estética premium con focus dorado)
+│   │   └── visual-editor/page.tsx (lienzo interactivo modo Canva)
 │   ├── catalogo/
 │   │   ├── page.tsx
 │   │   ├── CatalogGrid.tsx (grilla simétrica + Framer Motion + QuickView)
 │   │   └── loading.tsx (ProductSkeleton fallback)
 │   ├── layout.tsx (metadatos OpenGraph + Twitter Cards)
-│   ├── page.tsx (Home con ScrollReveal + SectionDivider)
+│   ├── page.tsx (Home dinámica con SECTION_REGISTRY)
 │   ├── not-found.tsx (página 404 editorial)
 │   ├── manifest.ts (PWA manifest tipado)
 │   └── globals.css (scroll-behavior smooth)
 ├── components/
+│   ├── admin/
+│   │   ├── CanvasMetrics.tsx (panel de métricas: secciones totales, ocultas, badge de estado)
+│   │   ├── DesignerTipBanner.tsx (banner onboarding dismissible con localStorage)
+│   │   ├── DraggableSectionList.tsx (DnD con @dnd-kit + subformulario promo-banner)
+│   │   ├── EditableText.tsx (contentEditable seguro sin salto de cursor)
+│   │   ├── EditModePanel.tsx (panel lateral modo Diseñador/Canva)
+│   │   ├── EmptySectionState.tsx (placeholder para secciones vacías en editor)
+│   │   ├── ImageDropZone.tsx (drag & drop de imágenes con compresión WebP)
+│   │   ├── ProductGridPreview.tsx (preview síncrono con mock data para visual-editor)
+│   │   ├── PublishHistoryPanel.tsx (historial de versiones con rollback)
+│   │   ├── SectionCanvasWrapper.tsx (wrapper con toolbar flotante y selección controlada)
+│   │   ├── TemplateLibrary.tsx (biblioteca de plantillas insertables)
+│   │   └── ThemeSelector.tsx (selector de temas de acento)
 │   ├── catalogo/
 │   │   ├── FilterBar.tsx (filtros editoriales con underline animado)
 │   │   └── ProductSkeleton.tsx (skeleton con animate-pulse 2.2s)
@@ -634,21 +658,269 @@ src/
 │   │   ├── Footer.tsx (2 actos: banner contacto + footer editorial)
 │   │   └── Navbar.tsx
 │   └── sections/
-│       ├── Hero.tsx
-│       ├── MissionVision.tsx (layout asimétrico 60/40 con layering)
-│       ├── Materials.tsx (3 tarjetas uniformes con stagger)
-│       ├── ProductGrid.tsx (3 destacados conectados a Supabase)
+│       ├── Hero.tsx (editable inline con contentEditable)
+│       ├── Materials.tsx (editable inline nombres de materiales)
+│       ├── Philosophy.tsx (editable inline Misión/Visión)
+│       ├── ProductGrid.tsx (3 destacados async conectados a Supabase)
+│       ├── PromoBanner.tsx (countdown timer con auto-ocultamiento)
 │       ├── Values.tsx (mosaico asimétrico con texto condicional)
 │       └── Reviews.tsx
 ├── lib/
 │   ├── image-compression.ts (Canvas → WebP quality 0.82)
+│   ├── page-layout.ts (getPageLayout, updatePageLayout)
 │   ├── supabase.ts
 │   └── supabase-products.ts
 ├── types/
 │   ├── index.ts (Review)
+│   ├── layout.ts (SectionType, SectionConfig, PageLayout)
 │   └── product.ts (Product, ProductCategory, ProductGender)
 └── middleware.ts
 ```
+
+### [Julio 2026: Fase 2 — Sistema Dinámico de Layout con Drag & Drop]
+
+#### **Infraestructura de Base de Datos:**
+- **Tabla `page_layout` en Supabase:**
+  - Columnas: `page_slug` (TEXT PK), `sections` (JSONB), `updated_at` (TIMESTAMPTZ).
+  - Almacena el orden, visibilidad y configuración de cada sección de la Home.
+- **Tipos en `src/types/layout.ts`:**
+  - `SectionType`: union de tipos de sección ("hero" | "materials" | "product-grid" | "values" | "reviews" | "philosophy" | "promo-banner").
+  - `SectionConfig`: interfaz con `id`, `type`, `visible`, `order`, `config?`.
+  - `PageLayout`: interfaz con `pageSlug`, `sections`, `updatedAt`.
+- **Funciones en `src/lib/page-layout.ts`:**
+  - `getPageLayout(pageSlug)`: obtiene layout desde Supabase o retorna `DEFAULT_HOME_LAYOUT`.
+  - `updatePageLayout(sections, pageSlug)`: upsert de layout con `onConflict: "page_slug"`.
+
+#### **Componentes de Administración:**
+- **`src/components/admin/DraggableSectionList.tsx`:**
+  - Instalación de `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`.
+  - Lista vertical arrastrable con sensores `PointerSensor` (distance: 6) y `KeyboardSensor`.
+  - `SortableSectionItem` con handle `GripVertical` de Lucide.
+  - Switch de visibilidad por sección con animación de translate.
+  - Subformulario colapsable exclusivo para `promo-banner` (título, fecha expiración, imagen).
+  - Callback `onConfigChange(id, key, value)` inmutable para evitar bugs de React 18 batching.
+- **`src/components/admin/EditModePanel.tsx`:**
+  - Panel lateral deslizante desde la izquierda (`w-[360px]`).
+  - Estados: `isOpen`, `sections`, `originalSections`, `loading`, `saving`, `toast`.
+  - Botones "Guardar Cambios" y "Descartar" con detección de cambios no guardados.
+  - Toast de confirmación con estilos boutique dark.
+  - Dos modos: `standalone` (panel flotante) y `canvas` (panel fijo para visual-editor).
+- **Inyección en `AdminDashboard.tsx`:**
+  - Import de `EditModePanel` con `pageSlug="home"`.
+  - Botón flotante "Modo Diseñador" visible solo en `/admin`.
+
+#### **Home Dinámica (`src/app/page.tsx`):**
+- `SECTION_REGISTRY`: mapa de tipos a componentes.
+- `getPageLayout("home")` en servidor para obtener secciones.
+- Filtrado de secciones visibles y ordenamiento por `order`.
+- Renderizado con `ScrollReveal` y `SectionDivider` entre secciones.
+- Prop `config` pasada a cada componente para configuración dinámica.
+
+---
+
+### [Julio 2026: Fase 3 — Banner Promocional 2x1 con Countdown]
+
+#### **Componente `src/components/sections/PromoBanner.tsx`:**
+- Componente cliente con countdown timer inteligente.
+- Props: `config?: { title?, image?, expiresAt? }`.
+- `calculateTimeLeft()` con `useCallback` para optimización.
+- Auto-ocultamiento si `expiresAt` ya pasó (retorna `null`).
+- Diseño premium con overlay oscuro sobre imagen de fondo.
+- Contador regresivo con días, horas, minutos, segundos.
+- Fallbacks seguros: título por defecto "2x1 EN PIEZAS SELECCIONADAS", imagen `/images/hero-bg.jpg`.
+
+#### **Integración en Sistema Dinámico:**
+- Registro en `SECTION_REGISTRY` de `page.tsx`: `"promo-banner": PromoBanner`.
+- Entrada en `DEFAULT_HOME_LAYOUT`: `{ id: "promo-banner", type: "promo-banner", visible: false, order: 6, config: {...} }`.
+- Subformulario en `DraggableSectionList.tsx` para configuración inline:
+  - Input de título de promoción.
+  - Input `datetime-local` para fecha de expiración.
+  - Input de ruta de imagen de fondo.
+
+#### **Refactorización Inmutable:**
+- **Problema:** El hack original usaba doble `onToggleVisibility()` para forzar re-render, lo cual causaba toggling involuntario por React 18 batching.
+- **Solución:** Nuevo callback `onConfigChange(id, key, value)` que actualiza `section.config` de forma inmutable.
+- `SortableSectionItem` ahora recibe `onConfigChange` como prop adicional.
+
+---
+
+### [Julio 2026: Fase 4 — Modo Canva (Editor Visual en Vivo)]
+
+#### **Ruta `src/app/admin/visual-editor/page.tsx`:**
+- Client Component con layout de dos columnas: panel lateral + lienzo.
+- Estado local `sections` sincronizado con `EditModePanel` en modo `canvas`.
+- `createConfigUpdater(sectionType)` para generar callbacks de actualización por sección.
+- Pasa props `editable`, `editableConfig`, `onUpdateConfig` a componentes editables.
+- Barra superior con enlace "Volver al Panel".
+
+#### **Adaptación de `EditModePanel.tsx`:**
+- Discriminated union de props: `EditModePanelStandaloneProps` | `EditModePanelCanvasProps`.
+- Modo `canvas`: panel siempre visible, controlado externamente, sin botón de apertura.
+- Modo `standalone`: comportamiento original con botón flotante.
+- `originalRef` para tracking de cambios en modo canvas.
+
+#### **Hero Editable (`src/components/sections/Hero.tsx`):**
+- Props opcionales: `editable?`, `editableConfig?`, `onUpdateConfig?`.
+- `contentEditable={true}` en título y subtítulo cuando `editable` es true.
+- `suppressContentEditableWarning` para evitar warnings de React.
+- `onBlur` dispara `handleBlur(key, ref)` que actualiza config via callback.
+- `onKeyDown` para Enter → blur.
+- Indicador visual: `hover:ring-2 hover:ring-[#D4AF37]/30 focus:ring-2 focus:ring-[#D4AF37]/50`.
+- Fallbacks: título "Esencia en cada detalle", subtítulo desde `BRAND_INFO.slogan`.
+
+#### **Acceso desde AdminDashboard:**
+- Botón "Editor Visual" con icono `Paintbrush` de Lucide.
+- Enlace a `/admin/visual-editor`.
+
+---
+
+### [Julio 2026: Fase 5 — Inline Editing para Materials y Philosophy]
+
+#### **Materials Editable (`src/components/sections/Materials.tsx`):**
+- Props opcionales: `editable?`, `editableConfig?`, `onUpdateConfig?`.
+- `materialRefs` como array de refs para cada nombre de material.
+- `handleMaterialBlur(index, field)` actualiza nombre del material en config.
+- `editableConfig.materials` mapea sobre `DEFAULT_MATERIALS` con fallbacks.
+- Indicador visual de edición solo en nombres de materiales.
+
+#### **Philosophy Editable (`src/components/sections/Philosophy.tsx`):**
+- Props opcionales: `editable?`, `editableConfig?`, `onUpdateConfig?`.
+- Refs separadas para título y descripción de Misión y Visión.
+- `handleBlur(block, field, ref)` actualiza `config.mission` o `config.vision`.
+- `editableConfig.mission` y `editableConfig.vision` con fallbacks a `DEFAULT_MISSION` y `DEFAULT_VISION`.
+- Indicador visual con `ring-offset-[#FAF7F2]` (fondo crema de la sección).
+
+#### **Visual Editor Actualizado:**
+- `createConfigUpdater` genérico reutilizado para todas las secciones editables.
+- Detección de secciones editables: `section.type === "materials" || section.type === "philosophy"`.
+- Spread de props condicionales: `{...(isEditable && { editable: true, editableConfig, onUpdateConfig })}`.
+
+---
+
+### [Julio 2026: Fase 13 — Empty States y Onboarding]
+
+#### **Componente `src/components/admin/EmptySectionState.tsx`:**
+- Client Component que muestra placeholder cuando una sección está vacía en modo editor.
+- Props: `sectionType: SectionType`, `onStartEditing?: () => void`.
+- Diseño: contenedor con `border-2 border-dashed border-[#D4AF37]/30`, `rounded-sm`, padding generoso (`py-16 px-8`), fondo `bg-[#1A1A1A]/[0.02]`.
+- Ícono contextual por tipo de sección usando diccionario interno:
+  - `hero` → `ImagePlus` con mensaje "Haz clic en el título para personalizar tu encabezado"
+  - `materials` → `ImagePlus` con mensaje "Añade tus materiales haciendo clic en cada nombre"
+  - `philosophy` → `PenLine` con mensaje "Escribe tu misión y visión directamente aquí"
+  - `promo-banner` → `TicketPercent` con mensaje "Configura el título, imagen y fecha de expiración desde el panel lateral"
+- Texto en `text-xs text-[#1A1A1A]/50 tracking-wide font-serif italic`.
+
+#### **Detección de Estado Vacío en Secciones:**
+- **Materials.tsx:**
+  - Lógica: `isEmpty = editable && (!editableConfig?.materials || editableConfig.materials.length === 0)`
+  - Si `isEmpty` es true, renderiza `<EmptySectionState sectionType="materials" />` en lugar del contenido normal.
+  - **CRÍTICO:** Solo se activa cuando `editable === true` (modo canvas admin). En el sitio público (`/`), los componentes usan `DEFAULT_MATERIALS` como fallback, así que nunca muestran el empty state.
+- **Philosophy.tsx:**
+  - Lógica: `isEmpty = editable && (!editableConfig?.mission?.title || editableConfig.mission.title.trim() === "") && (!editableConfig?.vision?.title || editableConfig.vision.title.trim() === "")`
+  - Mismo patrón: solo se activa en modo editor, no afecta el sitio público.
+
+#### **Componente `src/components/admin/DesignerTipBanner.tsx`:**
+- Banner horizontal fijo en la parte superior del área de lienzo (no del panel lateral).
+- Estado local `isVisible` inicializado en `false`, `useEffect` lee `localStorage.getItem("esencia_tip_dismissed")` al montar.
+- Si no existe la key, `setIsVisible(true)`.
+- Diseño: fondo `bg-[#232019]`, borde inferior `border-b border-[#D4AF37]/20`, padding `px-6 py-3`.
+- Contenido: ícono `Sparkles` de lucide-react en `text-[#D4AF37]`, texto `text-xs text-white/70` con atajos de teclado en `<kbd>`:
+  - "Tip del Diseñador: usa Cmd+S (o Ctrl+S) para guardar rápido, Esc para deseleccionar, y las flechas ↑↓ para navegar entre secciones."
+- Botón `X` de lucide-react a la derecha, onClick hace `localStorage.setItem("esencia_tip_dismissed", "true")` y `setIsVisible(false)`.
+- Animación con framer-motion: `<motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}>` envuelto en `<AnimatePresence>` para colapso suave.
+
+#### **Integración en `visual-editor/page.tsx`:**
+- Renderiza `<DesignerTipBanner />` como primer elemento dentro del área de lienzo, antes del loop de secciones.
+
+---
+
+### [Julio 2026: Fase 14 — Navegación por Teclado]
+
+#### **Cambio Arquitectónico — Elevación de Estado de Selección:**
+- **Problema:** `SectionCanvasWrapper.tsx` manejaba `isSelected` como estado local (`useState` interno), lo que impedía navegación por teclado entre secciones.
+- **Solución:** Estado elevado a `src/app/admin/visual-editor/page.tsx` como `selectedSectionId: string | null` compartido entre todas las secciones.
+- `SectionCanvasWrapper.tsx` ahora recibe `isSelected: boolean` y `onSelect: () => void` como props en lugar de manejar su propio estado.
+
+#### **Modificaciones en `SectionCanvasWrapper.tsx`:**
+- **ELIMINADO:** `const [isSelected, setIsSelected] = useState(false);`
+- **AGREGADO:** Props `isSelected: boolean` y `onSelect: () => void`.
+- Reemplazado `onClick` interno (que hacía `setIsSelected(true)`) por `onSelect()`.
+- Reemplazadas todas las referencias internas a `isSelected` para que lean la prop en vez del estado local.
+- **ELIMINADO:** `onMouseLeave` que deseleccionaba en hover-out (ya no tiene sentido con selección controlada por clic + teclado).
+
+#### **Navegación por Teclado en `visual-editor/page.tsx`:**
+- **Estado nuevo:** `const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);`
+- **Refs para scroll:** `const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map());`
+- **Listener de keydown extendido** (mismo useEffect del Cmd+S/Ctrl+S):
+  - **Tecla "Escape":** Si `selectedSectionId` no es null, `setSelectedSectionId(null)` y `e.preventDefault()`.
+  - **Tecla "ArrowUp":** Si `selectedSectionId` no es null, encuentra el índice de la sección actual en `orderedVisibleSections`, y si existe un índice anterior, `setSelectedSectionId(orderedVisibleSections[index - 1].id)`. Ejecuta `scrollIntoView({ behavior: "smooth", block: "center" })` sobre el elemento de la sección recién seleccionada usando `sectionRefs.current.get(newId)`.
+  - **Tecla "ArrowDown":** Mismo patrón pero hacia el índice siguiente.
+  - **IMPORTANTE:** Las flechas y Escape SOLO se interceptan cuando el foco activo del documento NO está dentro de un elemento `contentEditable` ni de un `<input>`/`<textarea>` (verifica `document.activeElement?.getAttribute("contenteditable") !== "true"` y que el `tagName` no sea INPUT/TEXTAREA) — de lo contrario rompería la navegación normal del cursor mientras el admin escribe texto.
+
+#### **Callback Refs por Sección:**
+- En el `.map()` de renderizado de secciones, cada `<motion.div>` recibe un callback ref:
+  ```typescript
+  ref={(el) => {
+    if (el) {
+      sectionRefs.current.set(section.id, el);
+    }
+  }}
+  ```
+- Permite acceder al elemento DOM para `scrollIntoView` cuando se navega con flechas.
+
+#### **Props Pasadas a SectionCanvasWrapper:**
+- `isSelected={selectedSectionId === section.id}`
+- `onSelect={() => setSelectedSectionId(section.id)}`
+- Agregado `onClick` en `<main>` que llama `setSelectedSectionId(null)` al hacer clic en espacio vacío del lienzo.
+
+---
+
+### [Julio 2026: Fase 15 — Panel de Métricas]
+
+#### **Componente `src/components/admin/CanvasMetrics.tsx`:**
+- Props: `sections: SectionConfig[]`, `hasUnsavedChanges: boolean`, `isPublished: boolean`.
+- Diseño: bloque compacto en la parte SUPERIOR del EditModePanel, fondo `bg-white/[0.03]`, `rounded-sm`, padding `p-4`, grid `grid-cols-2 gap-3`.
+- **Métrica 1:** "Secciones totales" con `sections.length` en `font-serif text-2xl text-[#FDFBF7]`.
+- **Métrica 2:** "Ocultas" con `sections.filter(s => !s.visible).length` en el mismo estilo, color `text-white/50` si es 0, color `text-[#D4AF37]` si es mayor a 0.
+- **Badge de estado** (ancho completo debajo del grid):
+  - Si `hasUnsavedChanges` es true → badge con `bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37]`, texto "● Cambios sin publicar".
+  - Si es false y ya hay una publicación previa (`isPublished === true`) → `bg-emerald-500/10 border border-emerald-500/30 text-emerald-400`, texto "● Borrador al día con producción".
+  - Usa un punto Unicode "●" como indicador visual simple, no un ícono, para mantenerlo minimalista.
+
+#### **Integración en `EditModePanel.tsx`:**
+- Renderiza `<CanvasMetrics>` como primer elemento dentro del panel, antes de `DraggableSectionList`.
+- Props pasadas: `sections={sections}`, `hasUnsavedChanges={hasUnsavedChanges}` (ya calculado en este componente desde Fases anteriores), `isPublished={props.lastPublishedAt !== null}`.
+
+#### **Lógica de `isPublished`:**
+- Proxy simple: `!hasUnsavedChanges && lastPublishedAt !== null`.
+- Si el borrador actual coincide exactamente con lo publicado (no hay cambios sin guardar) Y ya existe una publicación previa, se considera "al día con producción".
+
+---
+
+### [Julio 2026: Hotfix — Error de Async Client Component]
+
+#### **Problema:**
+- Error: `<ProductGrid> is an async Client Component. Only Server Components can be async...`.
+- Causa: `visual-editor/page.tsx` es Client Component y no puede evaluar componentes async directamente.
+
+#### **Solución — Desacople de Entornos:**
+- **`src/components/admin/ProductGridPreview.tsx`:**
+  - Client Component síncrono con `"use client"`.
+  - Mock data con 3 productos estáticos: Pulso Ébano Gold, Cadena Faith Gold, Pulso Emerald Gold.
+  - Réplica visual del `ProductGrid` original (grid, tarjetas, precios, botones WhatsApp).
+  - Sin conexión a Supabase, sin async/await.
+- **Modificación en `visual-editor/page.tsx`:**
+  - Import de `ProductGridPreview` en lugar de `ProductGrid`.
+  - `SECTION_REGISTRY` actualizado: `"product-grid": ProductGridPreview`.
+- **Sitio público (`/`) preservado:**
+  - `page.tsx` público sigue usando `ProductGrid` async con SSR.
+  - Sin cambios en la ruta pública.
+
+#### **Build:**
+- `npm run build` completado exitosamente sin errores de TypeScript.
+- Todas las rutas funcionan correctamente: `/`, `/admin`, `/admin/visual-editor`, `/catalogo`.
+
+---
 
 ## 🚀 4. Estado de Producción
 
@@ -659,10 +931,11 @@ src/
 **Build de producción:** Exitoso sin errores ni advertencias de TypeScript.
 
 **Rutas generadas:**
-- `/` - Landing page principal
+- `/` - Landing page principal (Home dinámica con layout configurable)
 - `/catalogo` - Catálogo completo interactivo con filtros cruzados
 - `/admin` - Panel de administración protegido (requiere autenticación)
 - `/admin/login` - Pantalla de acceso privada
+- `/admin/visual-editor` - Editor visual en vivo (Modo Canva)
 
 **Características implementadas:**
 - ✅ Base de datos PostgreSQL en Supabase con 27 productos (15 masculinos + 12 femeninos)
@@ -701,6 +974,28 @@ src/
 - ✅ Middleware de protección de rutas administrativas
 - ✅ Políticas RLS en Supabase para seguridad a nivel de fila
 - ✅ `scroll-behavior: smooth` global para ancla perfecta del Navbar
+- ✅ **Sistema dinámico de layout** con tabla `page_layout` en Supabase (JSONB para secciones)
+- ✅ **Drag & Drop con @dnd-kit** para reordenamiento de secciones en panel admin
+- ✅ **Switches de visibilidad** por sección con animación premium
+- ✅ **EditModePanel** con dos modos: standalone (flotante) y canvas (fijo)
+- ✅ **Banner Promocional 2x1** con countdown timer y auto-ocultamiento por expiración
+- ✅ **Subformulario colapsable** para configuración de promo-banner en panel DnD
+- ✅ **Editor Visual en Vivo** (`/admin/visual-editor`) con lienzo interactivo tipo Canva/Webflow
+- ✅ **Edición inline con contentEditable** en Hero (título/subtítulo), Materials (nombres) y Philosophy (Misión/Visión)
+- ✅ **Indicadores visuales de edición** con anillo dorado al hover/focus
+- ✅ **Desacople de entornos** para resolver async Client Component: ProductGrid (SSR) vs ProductGridPreview (mock)
+- ✅ **Refactorización inmutable** con `onConfigChange` para evitar bugs de React 18 batching
+- ✅ **Tipado estricto** en `src/types/layout.ts` con SectionType, SectionConfig, PageLayout
+- ✅ **Empty States** con borde dorado punteado para secciones vacías en modo editor
+- ✅ **Designer Tip Banner** dismissible con persistencia en localStorage y animación de colapso
+- ✅ **Navegación por teclado** (Esc, ↑↓) con scroll suave y detección de campos editables
+- ✅ **Panel de Métricas** con contador de secciones, ocultas y badge de estado (dorado/verde)
+- ✅ **Selección de secciones elevada** a estado compartido en visual-editor/page.tsx
+- ✅ **Empty States** con borde dorado punteado para secciones vacías en modo editor
+- ✅ **Designer Tip Banner** dismissible con persistencia en localStorage y animación de colapso
+- ✅ **Navegación por teclado** (Esc, ↑↓) con scroll suave y detección de campos editables
+- ✅ **Panel de Métricas** con contador de secciones, ocultas y badge de estado (dorado/verde)
+- ✅ **Selección de secciones elevada** a estado compartido en visual-editor/page.tsx
 
 **Stack tecnológico:**
 - Next.js 16.2.10 (App Router + Turbopack)
@@ -708,6 +1003,7 @@ src/
 - Tailwind CSS v4
 - Lucide React (iconos) + SVGs inline para iconos no disponibles
 - Framer Motion (animaciones cinematográficas)
+- @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities (Drag & Drop)
 - Supabase (PostgreSQL + Storage + Auth)
 - @supabase/ssr (gestión de sesiones)
 - Vercel (plataforma de deploy recomendada)
@@ -720,18 +1016,32 @@ src/
 │   │   └── revalidate.ts (Server Action - revalidación / y /catalogo)
 │   ├── admin/
 │   │   ├── page.tsx (Server Component - carga inicial)
-│   │   ├── AdminDashboard.tsx (Client Component - CRUD + compresión WebP)
-│   │   └── login/page.tsx (Login premium con focus dorado)
+│   │   ├── AdminDashboard.tsx (Client Component - CRUD + compresión WebP + botón Editor Visual)
+│   │   ├── login/page.tsx (Login premium con focus dorado)
+│   │   └── visual-editor/page.tsx (Client Component - lienzo interactivo modo Canva)
 │   ├── catalogo/
 │   │   ├── page.tsx (Server Component, revalidate: 10s)
 │   │   ├── CatalogGrid.tsx (Client Component con Framer Motion + QuickView)
 │   │   └── loading.tsx (ProductSkeleton fallback automático)
 │   ├── layout.tsx (metadatos OpenGraph + Twitter Cards)
-│   ├── page.tsx (Home con ScrollReveal + SectionDivider)
+│   ├── page.tsx (Home dinámica con SECTION_REGISTRY + ScrollReveal)
 │   ├── not-found.tsx (página 404 editorial)
 │   ├── manifest.ts (PWA manifest tipado)
 │   └── globals.css (scroll-behavior smooth)
 ├── components/
+│   ├── admin/
+│   │   ├── CanvasMetrics.tsx (panel de métricas: secciones totales, ocultas, badge de estado)
+│   │   ├── DesignerTipBanner.tsx (banner onboarding dismissible con localStorage)
+│   │   ├── DraggableSectionList.tsx (DnD con @dnd-kit + subformulario promo-banner)
+│   │   ├── EditableText.tsx (contentEditable seguro sin salto de cursor)
+│   │   ├── EditModePanel.tsx (panel lateral modo Diseñador/Canva)
+│   │   ├── EmptySectionState.tsx (placeholder para secciones vacías en editor)
+│   │   ├── ImageDropZone.tsx (drag & drop de imágenes con compresión WebP)
+│   │   ├── ProductGridPreview.tsx (preview síncrono con mock data)
+│   │   ├── PublishHistoryPanel.tsx (historial de versiones con rollback)
+│   │   ├── SectionCanvasWrapper.tsx (wrapper con toolbar flotante y selección controlada)
+│   │   ├── TemplateLibrary.tsx (biblioteca de plantillas insertables)
+│   │   └── ThemeSelector.tsx (selector de temas de acento)
 │   ├── catalogo/
 │   │   ├── FilterBar.tsx (filtros editoriales con underline animado)
 │   │   └── ProductSkeleton.tsx (skeleton con animate-pulse 2.2s)
@@ -745,18 +1055,21 @@ src/
 │   │   ├── Footer.tsx (2 actos: banner contacto + footer editorial)
 │   │   └── Navbar.tsx
 │   └── sections/
-│       ├── Hero.tsx
-│       ├── MissionVision.tsx (layout asimétrico 60/40 con layering)
-│       ├── Materials.tsx (3 tarjetas uniformes con stagger editorial)
-│       ├── ProductGrid.tsx (3 destacados conectados a Supabase)
+│       ├── Hero.tsx (editable inline con contentEditable)
+│       ├── Materials.tsx (editable inline nombres de materiales)
+│       ├── Philosophy.tsx (editable inline Misión/Visión)
+│       ├── ProductGrid.tsx (3 destacados async conectados a Supabase)
+│       ├── PromoBanner.tsx (countdown timer con auto-ocultamiento)
 │       ├── Values.tsx (mosaico asimétrico con texto condicional)
 │       └── Reviews.tsx
 ├── lib/
 │   ├── image-compression.ts (Canvas → WebP quality 0.82)
+│   ├── page-layout.ts (getPageLayout, updatePageLayout)
 │   ├── supabase.ts (Cliente Supabase)
 │   └── supabase-products.ts (Funciones CRUD)
 ├── types/
 │   ├── index.ts (Review)
+│   ├── layout.ts (SectionType, SectionConfig, PageLayout)
 │   └── product.ts (Product, ProductCategory, ProductGender, ProductImage)
 └── middleware.ts (Protección de rutas /admin)
 ```
@@ -769,7 +1082,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<tu_anon_key_aqui>
 
 **Próximamente:**
 - Integración con pasarela de pagos
-- Panel administrativo avanzado con estadísticas
+- Estadísticas de ventas y analytics en panel admin
 - Sistema de pedidos y seguimiento
 - Notificaciones por email para nuevos pedidos
 

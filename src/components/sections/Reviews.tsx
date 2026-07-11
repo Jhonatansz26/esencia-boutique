@@ -5,6 +5,14 @@ import { Star, X } from "lucide-react";
 import SectionTitle from "@/components/common/SectionTitle";
 import Button from "@/components/common/Button";
 import { Review } from "@/types";
+import { SECTION_THEMES, SectionThemeId } from "@/lib/section-themes";
+
+interface ReviewsProps {
+  editableConfig?: {
+    theme?: SectionThemeId;
+    [key: string]: unknown;
+  };
+}
 
 const STORAGE_KEY = "esencia-reviews";
 
@@ -32,7 +40,10 @@ const INITIAL_REVIEWS: Review[] = [
   },
 ];
 
-export default function Reviews() {
+export default function Reviews({ editableConfig }: ReviewsProps) {
+  const themeId = (editableConfig?.theme as SectionThemeId) ?? "default";
+  const theme = SECTION_THEMES[themeId];
+
   const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState("");
@@ -82,7 +93,7 @@ export default function Reviews() {
   };
 
   return (
-    <section className="pb-20">
+    <section className={`pb-20 ${theme.bgClass} ${theme.textClass}`}>
       <SectionTitle
         title="Experiencias Esencia"
         subtitle="Reseñas"

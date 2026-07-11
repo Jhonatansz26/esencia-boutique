@@ -82,3 +82,26 @@ INSERT INTO products (id, name, category, material, description, price, images, 
 -- 5. VERIFICAR INSERCIÓN
 -- ============================================
 SELECT id, name, category, price, featured FROM products ORDER BY id;
+
+-- ============================================
+-- 6. CREAR TABLA PAGE_LAYOUT (CMS Dinámico)
+-- ============================================
+-- Fase 1: Modo Diseñador - Control de orden y visibilidad de secciones
+
+CREATE TABLE IF NOT EXISTS page_layout (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  page_slug text NOT NULL DEFAULT 'home',
+  sections jsonb NOT NULL DEFAULT '[]'::jsonb,
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  updated_by uuid
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS page_layout_slug_idx ON page_layout(page_slug);
+
+ALTER TABLE page_layout ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access" ON page_layout;
+CREATE POLICY "Public read access" ON page_layout FOR SELECT TO public USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can update" ON page_layout;
+CREATE POLICY "Authenticated users can update" ON page_layout FOR UPDATE TO authenticated USING (true) WITH CHECK (true);

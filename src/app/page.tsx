@@ -1,41 +1,68 @@
+import { getPageLayout } from "@/lib/page-layout";
+import { getDesignTokens } from "@/app/actions/design-tokens";
 import Hero from "@/components/sections/Hero";
 import Materials from "@/components/sections/Materials";
 import ProductGrid from "@/components/sections/ProductGrid";
 import Values from "@/components/sections/Values";
 import Reviews from "@/components/sections/Reviews";
 import Philosophy from "@/components/sections/Philosophy";
+import PromoBanner from "@/components/sections/PromoBanner";
 import SectionDivider from "@/components/common/SectionDivider";
 import ScrollReveal from "@/components/common/ScrollReveal";
 
-export default function Home() {
+const SECTION_REGISTRY: Record<string, React.ComponentType<Record<string, unknown>>> = {
+  materials: Materials,
+  "product-grid": ProductGrid,
+  values: Values,
+  reviews: Reviews,
+  philosophy: Philosophy,
+  "promo-banner": PromoBanner,
+};
+
+export const revalidate = 30;
+
+export default async function Home() {
+  const [sections, designTokens] = await Promise.all([
+    getPageLayout("home"),
+    getDesignTokens(),
+  ]);
+
+  const orderedVisibleSections = sections
+    .filter((s) => s.visible && s.type !== "hero")
+    .sort((a, b) => a.order - b.order);
+
   return (
-    <main>
-      <Hero />
-      <SectionDivider />
+    <>
+      {designTokens && (
+        <style>{`
+          :root {
+            --color-brand-primary: ${designTokens.color.primary};
+            --color-brand-surface: ${designTokens.color.surface};
+            --color-brand-text: ${designTokens.color.text};
+            --font-brand-heading: ${designTokens.font.heading}, serif;
+            --font-brand-body: ${designTokens.font.body}, sans-serif;
+            --radius-brand-base: ${designTokens.radius.base};
+          }
+        `}</style>
+      )}
+      <main>
+        <Hero />
+        <SectionDivider />
 
-      <ScrollReveal>
-        <Materials />
-      </ScrollReveal>
-      <SectionDivider />
+        {orderedVisibleSections.map((section, index) => {
+          const SectionComponent = SECTION_REGISTRY[section.type];
+          if (!SectionComponent) return null;
 
-      <ScrollReveal>
-        <ProductGrid />
-      </ScrollReveal>
-      <SectionDivider />
-
-      <ScrollReveal>
-        <Values />
-      </ScrollReveal>
-      <SectionDivider />
-
-      <ScrollReveal>
-        <Reviews />
-      </ScrollReveal>
-      <SectionDivider />
-
-      <ScrollReveal>
-        <Philosophy />
-      </ScrollReveal>
-    </main>
+          return (
+            <div key={section.id}>
+              <ScrollReveal>
+                <SectionComponent config={section.config} />
+              </ScrollReveal>
+              {index < orderedVisibleSections.length - 1 && <SectionDivider />}
+            </div>
+          );
+        })}
+      </main>
+    </>
   );
 }
