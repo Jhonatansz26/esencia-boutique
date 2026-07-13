@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { SECTION_THEMES, SectionThemeId } from "@/lib/section-themes";
 import EditableText from "@/components/admin/EditableText";
+import ImageDropZone from "@/components/admin/ImageDropZone";
 import { BRAND_VALUES } from "@/constants/data";
 import { type ValuesConfig, VALUES_DEFAULTS } from "@/types/sections";
 
@@ -66,10 +67,12 @@ export default function Values({
   // Re-run every render so it reacts to config changes
   const mosaicValues: MosaicBlock[] = BRAND_VALUES.map((defaultVal, index) => {
     const customVal = configItems[index];
+    const staticLayout = MOSAIC_LAYOUT[index];
     return {
       title: customVal?.title ?? defaultVal.title,
       description: customVal?.description ?? defaultVal.description,
-      ...MOSAIC_LAYOUT[index],
+      bgImage: customVal?.bgImage ?? staticLayout.bgImage,
+      ...staticLayout,
     };
   });
 
@@ -78,6 +81,7 @@ export default function Values({
     const updated = mosaicValues.map((v) => ({
       title: v.title,
       description: v.description,
+      bgImage: v.bgImage,
     }));
     updated[index] = { ...updated[index], title: newTitle };
     onUpdateConfig("items", updated);
@@ -88,8 +92,20 @@ export default function Values({
     const updated = mosaicValues.map((v) => ({
       title: v.title,
       description: v.description,
+      bgImage: v.bgImage,
     }));
     updated[index] = { ...updated[index], description: newDesc };
+    onUpdateConfig("items", updated);
+  };
+
+  const commitItemBgImage = (index: number, newUrl: string) => {
+    if (!onUpdateConfig) return;
+    const updated = mosaicValues.map((v) => ({
+      title: v.title,
+      description: v.description,
+      bgImage: v.bgImage,
+    }));
+    updated[index] = { ...updated[index], bgImage: newUrl };
     onUpdateConfig("items", updated);
   };
 
@@ -139,14 +155,25 @@ export default function Values({
           >
             {value.bgImage ? (
               <div className="absolute inset-0 z-0">
-                <Image
-                  src={value.bgImage}
-                  alt={value.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                />
-                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                {editable && onUpdateConfig ? (
+                  <ImageDropZone
+                    sectionId={`values-tile-${index}`}
+                    onImageUpdate={(url) => commitItemBgImage(index, url)}
+                  >
+                    <div className="relative w-full h-full">
+                      <Image src={value.bgImage} alt={value.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw" />
+                    </div>
+                  </ImageDropZone>
+                ) : (
+                  <Image
+                    src={value.bgImage}
+                    alt={value.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  />
+                )}
+                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
               </div>
             ) : (
               value.large && (
@@ -177,14 +204,14 @@ export default function Values({
             </span>
 
             <div
-              className={`relative h-full flex flex-col z-10 ${
+              className={`relative h-full flex flex-col z-10 pointer-events-none ${
                 value.large ? "justify-between p-7 sm:p-9 md:p-8" : "justify-end p-6 md:p-8"
               }`}
             >
               {value.large ? (
                 <>
                   <div className={`h-px w-10 mt-2 ${value.bgImage ? "bg-white/40" : "bg-[#1A1A1A]/30"}`} />
-                  <div className="mt-auto">
+                  <div className="mt-auto pointer-events-auto">
                     {editable && onUpdateConfig ? (
                       <>
                         <EditableText
@@ -223,6 +250,7 @@ export default function Values({
               ) : (
                 <>
                   <div className="h-px w-10 bg-[#1A1A1A]/30 mb-4" />
+                  <div className="pointer-events-auto">
                   {editable && onUpdateConfig ? (
                     <>
                       <EditableText
@@ -248,6 +276,7 @@ export default function Values({
                       </p>
                     </>
                   )}
+                  </div>
                 </>
               )}
             </div>

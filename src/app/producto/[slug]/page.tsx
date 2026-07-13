@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
-import { getProductBySlug } from "@/lib/supabase-products";
+import { getProductBySlug, getRelatedProducts } from "@/lib/supabase-products";
 import ProductFullPage from "@/components/producto/ProductFullPage";
 
 interface Props {
@@ -50,5 +50,7 @@ export default async function ProductoPage({ params }: Props) {
     notFound();
   }
 
-  return <ProductFullPage product={product} />;
+  const related = await getRelatedProducts(product.id, product.gender, product.category);
+
+  return <ProductFullPage product={product} relatedProducts={related} />;
 }

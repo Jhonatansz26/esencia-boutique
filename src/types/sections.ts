@@ -65,6 +65,7 @@ export const PRODUCT_GRID_DEFAULTS = {
 export interface ValuesItem {
   title: string;
   description: string;
+  bgImage?: string;
 }
 
 export interface ValuesConfig {

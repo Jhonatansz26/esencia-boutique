@@ -189,3 +189,49 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
   return mapRowToProduct(data);
 }
+
+export async function getRelatedProducts(
+  currentProductId: string,
+  gender: Product["gender"] | null,
+  category: string,
+  limit = 4
+): Promise<Product[]> {
+  // Prioridad 1: mismo género Y misma categoría
+  const { data: sameBoth } = await supabase
+    .from("products")
+    .select("*")
+    .neq("id", currentProductId)
+    .or(`gender.eq.${gender},gender.eq.unisex`)
+    .eq("category", category)
+    .limit(limit);
+
+  let results = sameBoth ? sameBoth.map(mapRowToProduct) : [];
+
+  if (results.length >= limit) {
+    return results.slice(0, limit);
+  }
+
+  // Prioridad 2: mismo género, cualquier categoría
+  const needed = limit - results.length;
+  const existingIds = results.map(p => p.id);
+  const excludeStr = existingIds.length > 0 ? `(${existingIds.join(",")})` : "";
+
+  let query = supabase
+    .from("products")
+    .select("*")
+    .neq("id", currentProductId)
+    .or(`gender.eq.${gender},gender.eq.unisex`)
+    .limit(needed);
+
+  if (excludeStr) {
+    query = query.not("id", "in", excludeStr);
+  }
+
+  const { data: sameGender } = await query;
+
+  if (sameGender) {
+    results = [...results, ...sameGender.map(mapRowToProduct)];
+  }
+
+  return results;
+}
