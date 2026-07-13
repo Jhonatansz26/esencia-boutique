@@ -960,6 +960,30 @@ src/
 
 ---
 
+### [Julio 2026: Rebranding a Modo Diseñador y Evolución de Canvas]
+
+#### **Sprint 1: Limpieza y Rebranding**
+- **Rebranding Completo:** Se migró de "Editor Visual" a "Modo Diseñador", actualizando rutas (`/admin/modo-disenador`), títulos y sidebars para reflejar una identidad de producto premium.
+- **Redirección SSR:** Se configuró un redirect (`redirect("/admin/modo-disenador")`) en la ruta antigua `/admin/visual-editor` para asegurar compatibilidad.
+- **Limpieza de Código Muerto:** Eliminación segura de `src/components/sections/MissionVision.tsx` (ghost component redundante) para optimizar el bundle.
+
+#### **Sprint 2: Hero y ProductGrid Dinámicos**
+- **Contratos de Datos:** Se establecieron `HeroConfig` y `ProductGridConfig` en `src/types/sections.ts` con fallbacks de producción (`HERO_DEFAULTS`, `PRODUCT_GRID_DEFAULTS`).
+- **Edición Inline Segura:** Se inyectó `EditableText` en componentes complejos del Hero (botón CTA y "eyebrow") respetando el tipado y asegurando 0 errores de TypeScript al compilar.
+- **Lógica de Paridad Visual:** Transición exitosa a un flujo de datos centralizado en Supabase JSONB, eliminando zonas "hardcodeadas" muertas en el lienzo.
+
+#### **Sprint 3: Mosaico de Valores y Reseñas Bidireccionales**
+- **Valores (`Values.tsx`):** Se migró la constante estática `BRAND_VALUES` al sistema dinámico. Ahora el administrador puede editar el título de la sección, los iconos y textos de cada valor mediante `EditableText`.
+- **Reseñas (`Reviews.tsx`):** Eliminación de dependencias locales (`localStorage`). Implementación de un **panel de moderación inline** en el canvas para que el administrador pueda ver, editar, reordenar y eliminar curaduría de testimonios públicos que se guarden permanentemente en la base de datos de layout.
+
+#### **Sprint 4: Interactividad Avanzada (DnD Canvas y UX de Secciones Ocultas)**
+- **Drag-and-Drop Directo en el Lienzo:** Envoltorio completo del grid del canvas de la página en un contexto de `@dnd-kit` nativo (`DndContext`, `SortableContext` con `rectSortingStrategy`).
+- **Sensor Inteligente:** Uso de `PointerSensor` con `activationConstraint: { distance: 5 }` para impedir interferencia con clicks en textos editables.
+- **Drag Handle Elegante:** Badge lateral flotante convertido en una agarradera (grip) intuitiva que se muestra en `hover`.
+- **Modo Colapsado para Secciones Ocultas:** Eliminado el filtro ciego de secciones. Ahora las secciones `!section.visible` renderizan un "placeholder" minimalista punteado en vez del componente hijo. Esto evita pérdida de contexto espacial y permite al administrador reordenar las secciones, sin que colisionen visualmente.
+
+---
+
 ## 🚀 4. Estado de Producción
 
 ### ✅ Proyecto Listo para Deploy
@@ -1123,6 +1147,20 @@ src/
 NEXT_PUBLIC_SUPABASE_URL=https://nlsehgaihqdyixbfluur.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<tu_anon_key_aqui>
 ```
+
+## Sprint 5: Intercepting Routes y Migración de Slugs (13-07-2026)
+
+**Objetivos Alcanzados:**
+- **Refactorización UI/UX del Catálogo:** Mejoras visuales en los filtros y transiciones fluidas de los productos (Framer Motion).
+- **Migración a Slugs SEO:** Se agregó la columna `slug` en Supabase a la tabla `products` para habilitar URLs amigables (`/producto/[slug]`).
+- **Next.js Parallel & Intercepting Routes:** Se estructuró el App Router para permitir un doble comportamiento del detalle de producto:
+  - Navegación rápida (soft nav) desde el catálogo abre el producto en un Modal envolvente usando la ruta interceptada (`@modal/(..)producto/[slug]`), manteniendo el contexto y el scroll.
+  - Navegación directa (hard nav, o links directos) renderiza la página completa y cinemática en `producto/[slug]/page.tsx`.
+- **Generación dinámica de Metadatos (SEO):** La página de producto ahora genera etiquetas dinámicas de Open Graph de manera que al compartirse por redes (WhatsApp, Instagram), se visualice correctamente el cover y los datos.
+- **Limpieza de Estados:** Se eliminó la dependencia de `useState` para el modal de productos en el monolito del catálogo, ahora todo es controlado por las rutas nativas de Next.js.
+
+### Parche de Usabilidad: Infiltración de Productos Unisex
+Se solucionó el aislamiento de la **Colección Esencia Golf**, ajustando la lógica cruzada en el catálogo. Ahora, los productos etiquetados como `unisex` tienen visibilidad y soporte activo cruzado en las pestañas exclusivas de "Hombre" y "Mujer", resolviendo el bug visual donde sus categorías aparecían deshabilitadas (contador en 0).
 
 **Próximamente:**
 - Integración con pasarela de pagos

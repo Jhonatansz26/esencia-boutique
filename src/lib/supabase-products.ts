@@ -61,7 +61,7 @@ export async function updateProduct(
     material?: string[];
   }
 ): Promise<Product | null> {
-  console.log("Género enviado a Supabase:", updates.gender);
+  // Log removed for production
 
   const { data, error } = await supabase
     .from("products")
@@ -79,14 +79,7 @@ export async function updateProduct(
 }
 
 export async function createProduct(product: Omit<Product, "id"> & { id: string }): Promise<Product | null> {
-  console.log("Creating product with data:", {
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    images: product.images,
-    category: product.category,
-    gender: product.gender
-  });
+  // Log removed for production
 
   const { data, error } = await supabase
     .from("products")
@@ -110,7 +103,7 @@ export async function createProduct(product: Omit<Product, "id"> & { id: string 
     return null;
   }
 
-  console.log("Product created successfully:", data);
+  // Log removed for production
   return mapRowToProduct(data);
 }
 
@@ -155,7 +148,7 @@ export async function uploadProductImage(file: File, productId: string): Promise
       return null;
     }
 
-    console.log("Image uploaded successfully. Public URL:", urlData.publicUrl);
+    // Log removed for production
     return urlData.publicUrl;
   } catch (error) {
     console.error("Unexpected error uploading image:", error);
@@ -166,6 +159,7 @@ export async function uploadProductImage(file: File, productId: string): Promise
 export function mapRowToProduct(row: Record<string, unknown>): Product {
   const product = {
     id: row.id as string,
+    slug: row.slug as string,
     name: row.name as string,
     category: row.category as Product["category"],
     gender: (row.gender as Product["gender"]) || "mujer",
@@ -177,13 +171,21 @@ export function mapRowToProduct(row: Record<string, unknown>): Product {
     whatsappMessage: row.whatsapp_message as string,
   };
 
-  console.log("Mapped product:", {
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    imagesLength: product.images?.length,
-    firstImageSrc: product.images?.[0]?.src
-  });
+  // Log removed for production
 
   return product;
+}
+
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  if (!slug || typeof slug !== "string") return null;
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return mapRowToProduct(data);
 }

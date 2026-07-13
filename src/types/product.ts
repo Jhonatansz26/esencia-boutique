@@ -11,6 +11,7 @@ export type ProductGender = "hombre" | "mujer" | "unisex";
 
 export interface Product {
   id: string;
+  slug: string;
   name: string;
   category: ProductCategory;
   gender: ProductGender;

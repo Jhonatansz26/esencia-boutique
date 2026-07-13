@@ -342,6 +342,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
 
       const newProduct = await createProduct({
         id: productId,
+        slug: formData.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") + "-" + productId.toLowerCase(),
         name: formData.name,
         category: formData.category,
         gender: formData.gender,

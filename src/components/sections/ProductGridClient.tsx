@@ -14,6 +14,7 @@ import { type ProductGridConfig, PRODUCT_GRID_DEFAULTS } from "@/types/sections"
 function mapRowToProduct(row: Record<string, unknown>): Product {
   return {
     id: row.id as string,
+    slug: row.slug as string,
     name: row.name as string,
     category: row.category as Product["category"],
     gender: (row.gender as Product["gender"]) || "mujer",
