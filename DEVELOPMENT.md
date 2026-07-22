@@ -1162,6 +1162,62 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<tu_anon_key_aqui>
 ### Parche de Usabilidad: Infiltración de Productos Unisex
 Se solucionó el aislamiento de la **Colección Esencia Golf**, ajustando la lógica cruzada en el catálogo. Ahora, los productos etiquetados como `unisex` tienen visibilidad y soporte activo cruzado en las pestañas exclusivas de "Hombre" y "Mujer", resolviendo el bug visual donde sus categorías aparecían deshabilitadas (contador en 0).
 
+## Sprint 6: Experiencia Cinematográfica y Canvas Multimedia (13-07-2026)
+
+**Objetivos Alcanzados:**
+- **Rediseño Cinematográfico de Producto:** Se migró a un *split layout* asimétrico en `ProductFullPage.tsx`. En desktop, la galería de imágenes es `sticky`, bloqueando el scroll de la foto principal mientras el usuario lee las especificaciones y precios en la columna derecha.
+- **Sistema de Recomendaciones:** Se añadió el sistema `getRelatedProducts` en Supabase para obtener 4 piezas recomendadas dinámicamente con una lógica de fallback de dos pasos (priorizando mismo género + categoría, y luego mismo género general). 
+- **Integración DropZone en Mosaico de Valores:** Se habilitó el soporte multimedia en el componente `Values.tsx`. El schema `ValuesConfig` fue extendido de forma retrocompatible permitiendo propiedades `bgImage`. 
+- **Persistencia en Storage:** Ahora el administrador puede arrastrar y soltar imágenes (Drag & Drop) sobre las tarjetas del mosaico de valores. Estas se optimizan a WebP, suben al Supabase Storage y actualizan el layout instantáneamente en tiempo real.
+
+### [Hotfix: Auto-generación de Slug en Creación de Productos]
+
+#### **Problema Detectado:**
+- **Error:** HTTP 400 Bad Request al crear productos desde el panel de administración (`AdminDashboard.tsx`).
+- **Mensaje de Supabase:** La tabla `products` exige la columna `slug` (NOT NULL) pero la función de inserción no la estaba incluyendo en el payload.
+- **Causa raíz:** Durante el **Sprint 5 (Migración a Slugs SEO)** se agregó la columna `slug` a la tabla `products` para habilitar URLs amigables (`/producto/[slug]`), pero la función `createProduct()` en `src/lib/supabase-products.ts` no fue actualizada para incluir el campo en el objeto enviado a `.insert({...})`. El dashboard generaba el slug inline pero nunca llegaba a la base de datos.
+
+#### **Diagnóstico Técnico:**
+- **Análisis del flujo de datos:**
+  1. `AdminDashboard.tsx` línea 343-357: `handleSave()` generaba el slug manualmente concatenando `formData.name` normalizado + `productId.toLowerCase()`.
+  2. El objeto `newProduct` incluía la propiedad `slug`.
+  3. `createProduct()` recibía el objeto completo pero en el `.insert({...})` (líneas 86-97 originales) **omitía explícitamente el campo `slug`**.
+  4. Supabase rechazaba la inserción porque la columna `slug` tiene constraint `NOT NULL` sin valor por defecto.
+- **Verificación de edición:** La función `updateProduct()` no incluye `slug` en el payload de actualización, lo cual es correcto: el valor existente se preserva en la fila (no hay violación de NOT NULL en updates, y las URLs permanecen estables si se renombra el producto).
+
+#### **Solución Implementada:**
+- **Helper centralizado de generación de slug:**
+  - Nueva función exportada `generateProductSlug(name: string): string` en `src/lib/supabase-products.ts`.
+  - **Limpieza del nombre:**
+    - `toLowerCase()` para normalizar a minúsculas.
+    - `normalize("NFD")` + `.replace(/[\u0300-\u036f]/g, "")` para eliminar tildes y acentos (descomposición Unicode + eliminación de caracteres de combinación).
+    - `.replace(/[^a-z0-9]+/g, "-")` para reemplazar espacios, símbolos y caracteres especiales por guiones.
+    - `.replace(/^-+|-+$/g, "")` para eliminar guiones sobrantes al inicio y final.
+  - **Sufijo único anti-colisión:**
+    - Combinación de timestamp + aleatorio: `${Date.now().toString().slice(-4)}${Math.random().toString(36).slice(2, 6)}`.
+    - Los últimos 4 dígitos del timestamp (milisegundos) + 4 caracteres alfanuméricos aleatorios (base36) garantizan que el slug nunca colisione con el índice de unicidad de la base de datos, incluso si se crean dos productos con el mismo nombre en la misma sesión.
+  - **Fallback defensivo:** Si el nombre queda vacío tras la limpieza (ej: solo contenía símbolos), usa `"producto"` como base.
+  
+- **Refactorización de `createProduct()`:**
+  - Firma actualizada: `Omit<Product, "id" | "slug"> & { id: string; slug?: string }` — el slug es ahora opcional para el llamador.
+  - Generación dinámica antes de insertar: `const slug = product.slug?.trim() || generateProductSlug(product.name)`.
+  - Inclusión explícita del campo en el payload: `.insert({ id, slug, name, category, gender, material, description, price, images, featured, whatsapp_message })`.
+  - **Ventaja:** Single source of truth para la lógica de slugificación. Si en el futuro se cambia la estrategia (ej: usar UUIDs o timestamps más largos), solo se modifica el helper.
+
+- **Simplificación del dashboard:**
+  - Eliminada la generación inline duplicada en `AdminDashboard.tsx` línea 345 (que concatenaba `productId.toLowerCase()` como sufijo).
+  - Ahora `handleSave()` delega completamente la generación del slug a `createProduct()`, eliminando código muerto y manteniendo consistencia.
+
+#### **Archivos Modificados:**
+- `src/lib/supabase-products.ts` — Agregado helper `generateProductSlug()`, refactor de `createProduct()` para incluir slug en insert.
+- `src/app/admin/AdminDashboard.tsx` — Eliminada generación inline de slug en `handleSave()` (delegada al helper centralizado).
+
+#### **Verificación:**
+- **TypeScript:** `npx tsc --noEmit` ejecutado exitosamente — 0 errores de tipos.
+- **Integridad de datos:** La columna `slug` ahora siempre recibe un valor válido y único durante la creación.
+- **Compatibilidad retroactiva:** Productos existentes mantienen sus slugs (no se ven afectados por updates).
+- **Rutas públicas:** `/producto/[slug]` funciona correctamente para productos recién creados.
+
 **Próximamente:**
 - Integración con pasarela de pagos
 - Estadísticas de ventas y analytics en panel admin

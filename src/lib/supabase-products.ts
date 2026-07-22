@@ -78,13 +78,40 @@ export async function updateProduct(
   return mapRowToProduct(data);
 }
 
-export async function createProduct(product: Omit<Product, "id"> & { id: string }): Promise<Product | null> {
+/**
+ * Genera un slug URL-friendly a partir del nombre del producto:
+ * minúsculas, sin tildes/caracteres especiales, espacios reemplazados por guiones.
+ * Añade un sufijo único corto (timestamp + aleatorio) para garantizar que nunca
+ * colisione con el índice de unicidad de la base de datos.
+ */
+export function generateProductSlug(name: string): string {
+  const slugifiedName = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Eliminar tildes/acentos
+    .replace(/[^a-z0-9]+/g, "-") // Reemplazar espacios y caracteres especiales por guiones
+    .replace(/^-+|-+$/g, ""); // Eliminar guiones al inicio y al final
+
+  const uniqueSuffix = `${Date.now().toString().slice(-4)}${Math.random()
+    .toString(36)
+    .slice(2, 6)}`;
+
+  return `${slugifiedName || "producto"}-${uniqueSuffix}`;
+}
+
+export async function createProduct(
+  product: Omit<Product, "id" | "slug"> & { id: string; slug?: string }
+): Promise<Product | null> {
   // Log removed for production
+
+  // La columna slug es NOT NULL: se genera dinámicamente antes de insertar
+  const slug = product.slug?.trim() || generateProductSlug(product.name);
 
   const { data, error } = await supabase
     .from("products")
     .insert({
       id: product.id,
+      slug,
       name: product.name,
       category: product.category,
       gender: product.gender,
