@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import WhatsAppFloating from "@/components/common/WhatsAppFloating";
+import PromotionProvider from "@/components/promotions/PromotionProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -80,6 +81,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-screen flex flex-col">
+        <PromotionProvider />
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />

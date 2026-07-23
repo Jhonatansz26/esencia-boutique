@@ -1218,6 +1218,61 @@ Se solucionó el aislamiento de la **Colección Esencia Golf**, ajustando la ló
 - **Compatibilidad retroactiva:** Productos existentes mantienen sus slugs (no se ven afectados por updates).
 - **Rutas públicas:** `/producto/[slug]` funciona correctamente para productos recién creados.
 
+### [Julio 2026: Sistema de Promoción "10% OFF Primera Compra"]
+
+#### **Arquitectura del Sistema:**
+- **Nuevo directorio:** `src/components/promotions/` con 3 componentes orquestados.
+- **Nuevo hook:** `src/hooks/useLocalStorageFlag.ts` — hook reutilizable para gestionar banderas booleanas en localStorage con protección anti-hydration-mismatch (SSR-safe).
+- **Nueva constante:** `PROMO_CONFIG` en `src/constants/data.ts` con claves de localStorage/sessionStorage, delay de auto-apertura (3s), ruta de imagen y URL de WhatsApp promocional.
+- **Integración global:** `<PromotionProvider />` inyectado en `src/app/layout.tsx` dentro del `<body>`, manteniendo el layout como Server Component puro.
+
+#### **Componente `AnnouncementBar.tsx`:**
+- Barra superior fija (`z-40`) con fondo `bg-[#1A1A1A]` y animación Framer Motion (slide-down con `y: -40`).
+- Texto "10% OFF en tu primera compra — Haz clic para reclamar" con iconos `Sparkles` dorados.
+- Persistencia en `sessionStorage`: una vez cerrada, no reaparece durante la sesión.
+- Al hacer clic en la barra (excepto el botón X), dispara `onOpenModal()` para forzar apertura del modal.
+- Botón de cierre discreto con `X` de Lucide, posición absoluta a la derecha.
+
+#### **Componente `PromoModal.tsx`:**
+- Modal flotante con backdrop `bg-[#1A1A1A]/60 backdrop-blur-sm` y animación Framer Motion (scale + fade).
+- Auto-apertura tras 3 segundos si el usuario no ha visto la promo antes (controlado por `localStorage`).
+- **Solución de maquetación definitiva:** contenedor de imagen con `aspect-[3/4]` + `object-contain` para preservar proporciones nativas de la gráfica sin recortes ni márgenes blancos.
+- Imagen oficial del cliente: `/images/img-promocion.jpeg` (etiquetas físicas blancas con cordones negros + texto "ESENCIA® 10% OFF" tipográfico).
+- Fondo de tarjeta `bg-white` para fusión seamless con la imagen (mismo fondo blanco).
+- Sección inferior CTA con separador sutil `border-t border-[#1A1A1A]/5`, leyenda de apoyo, botón principal "RECLAMAR MI 10% OFF" (negro → dorado en hover) y enlace secundario "NO, GRACIAS".
+- Botón de cierre `X` con `bg-white/80 backdrop-blur-sm` en esquina superior derecha.
+
+#### **Componente `PromotionProvider.tsx`:**
+- Client Component que actúa como puente de estado entre `AnnouncementBar` y `PromoModal`.
+- Mantiene `layout.tsx` como Server Component puro (sin contaminación de `"use client"`).
+- Estado `modalForceOpen` compartido: `false` por defecto, `true` al hacer clic en la barra, reseteado al cerrar el modal.
+- Doble vía de apertura: auto (PromoModal gestiona internamente con localStorage) + explícita (clic en AnnouncementBar omite el bloqueo de localStorage).
+
+#### **Hook `useLocalStorageFlag.ts`:**
+- Hook genérico reutilizable para gestionar banderas booleanas en localStorage.
+- SSR-safe: estado inicial siempre `false` (idéntico en servidor y cliente), chequeo real en `useEffect`.
+- Expone `flagSet`, `setFlag()` y `clearFlag()` con try-catch defensivo para entornos con almacenamiento bloqueado.
+
+#### **Archivos Modificados/Creados:**
+- `src/components/promotions/AnnouncementBar.tsx` — **Nuevo**
+- `src/components/promotions/PromoModal.tsx` — **Nuevo**
+- `src/components/promotions/PromotionProvider.tsx` — **Nuevo**
+- `src/hooks/useLocalStorageFlag.ts` — **Nuevo**
+- `src/constants/data.ts` — Agregado `PROMO_CONFIG`
+- `src/app/layout.tsx` — Agregado `<PromotionProvider />` en el body
+- `public/images/img-promocion.jpeg` — **Nuevo** (imagen oficial de la campaña)
+
+#### **Iteraciones de Diseño del PromoModal:**
+1. **v1 — Imagen estática con CSS:** `object-contain` dentro de contenedor con padding. Problema: márgenes blancos gigantes.
+2. **v2 — Enfoque híbrido 50/50:** Mitad imagen (etiquetas físicas) + mitad texto HTML vectorial. Problema: duplicación de texto "10% OFF".
+3. **v3 — 100% tipográfico:** Sin imagen, todo en HTML. Descartado: el cliente envió gráfica oficial.
+4. **v4 — Imagen del modelo:** `object-cover object-top` con zoom. Problema: texto "ESENCIA®" en camiseta duplicaba la marca.
+5. **v5 (definitiva) — `aspect-[3/4]` + `object-contain`:** Contenedor fluido sin altura fija que respeta el aspect ratio nativo de la imagen. La gráfica del cliente (etiquetas + texto) se muestra 100% completa, sin recortes ni márgenes. Fondo `bg-white` para fusión seamless.
+
+#### **Certificación:**
+- `npx tsc --noEmit` — 0 errores de TypeScript.
+- Build de producción exitoso.
+
 **Próximamente:**
 - Integración con pasarela de pagos
 - Estadísticas de ventas y analytics en panel admin

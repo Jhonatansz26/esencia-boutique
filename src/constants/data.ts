@@ -34,3 +34,15 @@ export const BRAND_VALUES = [
 ] as const;
 
 export const CUSTOMER_REVIEWS: Review[] = [];
+
+export const PROMO_CONFIG = {
+  localStorageKey: "esencia_promo_seen_v1",
+  sessionStorageKey: "esencia_bar_dismissed",
+  delayMs: 3000,
+  promoImagePath: "/images/promocion.jpeg",
+  whatsappPromoUrl:
+    "https://wa.me/573114355141?text=" +
+    encodeURIComponent(
+      "Hola Esencia Boutique, vengo de la página web y quiero reclamar mi 10% OFF de primera compra 🎁"
+    ),
+} as const;
